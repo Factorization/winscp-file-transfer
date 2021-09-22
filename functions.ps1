@@ -360,23 +360,53 @@ function Get-SshFingerprint {
 	Add-Type -Path $DLL
 
 	# Setup session options
-	$sessionOptions = New-Object WinSCP.SessionOptions -Property @{
+	$SessionOptions = New-Object WinSCP.SessionOptions -Property @{
 		Protocol = [WinSCP.Protocol]::Sftp
 		HostName = $ComputerName
 		UserName = ""
 	}
+	Get-Fingerprint -SessionOptions $SessionOptions -Algorithm "SHA-256"
+}
 
-	# Scan for the host key
-	$session = New-Object WinSCP.Session
+
+function Get-FtpsFingerprint {
+	param(
+		[string]$ComputerName
+	)
+
+	# Load WinSCP .NET assembly
+	$DLL = Get-WinScpDll
+	Add-Type -Path $DLL
+
+	# Setup session options
+	$SessionOptions = New-Object WinSCP.SessionOptions -Property @{
+		Protocol  = [WinSCP.Protocol]::Ftp
+		HostName  = $ComputerName
+		FtpSecure = [WinSCP.FtpSecure]::Explicit
+	}
+	Get-Fingerprint -SessionOptions $SessionOptions -Algorithm "SHA-1"
+}
+
+function Get-Fingerprint {
+	param(
+		$SessionOptions,
+		$Algorithm
+	)
+	# Load WinSCP .NET assembly
+	$DLL = Get-WinScpDll
+	Add-Type -Path $DLL
+
+	# Get fingerprint
+	$Session = New-Object WinSCP.Session
 	try {
-		$fingerprint = $session.ScanFingerprint($sessionOptions, "SHA-256")
+		$Fingerprint = $Session.ScanFingerprint($SessionOptions, $Algorithm)
 	}
 	finally {
-		$session.Dispose()
+		$Session.Dispose()
 	}
 
 	# And output the host key to the pipeline
-	return $fingerprint
+	return $Fingerprint
 }
 
 function Write-Log {
