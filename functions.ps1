@@ -278,12 +278,12 @@ function Open-FtpsSession {
 	Add-Type -Path $DLL
 
 	$SessionOptions = New-Object WinSCP.SessionOptions -Property @{
-		Protocol              = [WinSCP.Protocol]::Ftp
-		FtpSecure             = [WinSCP.FtpSecure]::Explicit
-		HostName              = $ComputerName
-		UserName              = $Credential.UserName
-		Password 			  = $Credential.GetNetworkCredential().Password
-		SshHostKeyFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
+		Protocol                      = [WinSCP.Protocol]::Ftp
+		FtpSecure                     = [WinSCP.FtpSecure]::Explicit
+		HostName                      = $ComputerName
+		UserName                      = $Credential.UserName
+		Password                      = $Credential.GetNetworkCredential().Password
+		TlsHostCertificateFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
 	}
 
 	$TransferOptions = New-Object WinSCP.TransferOptions
