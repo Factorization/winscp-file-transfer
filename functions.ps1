@@ -265,6 +265,38 @@ function Open-Session {
 
 	return $Session
 }
+function Open-FtpsSession {
+	[CmdletBinding()]
+	param (
+		[string]$ComputerName,
+		[pscredential]$Credential = (Get-Credential),
+		[string]$SessionLogPath = "$PSScriptRoot\Logs\SessionLogs\$ComputerName"
+	)
+
+	# Load WinSCP .NET assembly
+	$DLL = Get-WinScpDll
+	Add-Type -Path $DLL
+
+	$SessionOptions = New-Object WinSCP.SessionOptions -Property @{
+		Protocol              = [WinSCP.Protocol]::Ftp
+		FtpSecure             = [WinSCP.FtpSecure]::Explicit
+		HostName              = $ComputerName
+		UserName              = $Credential.UserName
+		Password 			  = $Credential.GetNetworkCredential().Password
+		SshHostKeyFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
+	}
+
+	$TransferOptions = New-Object WinSCP.TransferOptions
+	$TransferOptions.TransferMode = [WinSCP.TransferMode]::Binary
+
+	$Session = New-Object WinSCP.Session
+	$SessionLog = Join-Path $SessionLogPath "$(Get-Date -Format FileDate).$ComputerName.Session.log"
+	$Session.SessionLogPath = $SessionLog
+
+	$Session.Open($SessionOptions)
+
+	return $Session
+}
 
 Function Close-Session {
 	[CmdletBinding()]
