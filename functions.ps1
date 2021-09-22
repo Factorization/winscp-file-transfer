@@ -270,7 +270,7 @@ function Open-FtpsSession {
 	param (
 		[string]$ComputerName,
 		[pscredential]$Credential = (Get-Credential),
-		[string]$SessionLogPath = "$PSScriptRoot\Logs\SessionLogs\$ComputerName"
+		[string]$SessionLogPath = "$Pwd\Logs\SessionLogs\$ComputerName"
 	)
 
 	# Load WinSCP .NET assembly
@@ -288,6 +288,8 @@ function Open-FtpsSession {
 
 	$TransferOptions = New-Object WinSCP.TransferOptions
 	$TransferOptions.TransferMode = [WinSCP.TransferMode]::Binary
+
+	$SessionLogPath = New-Directory -Path $SessionLogPath
 
 	$Session = New-Object WinSCP.Session
 	$SessionLog = Join-Path $SessionLogPath "$(Get-Date -Format FileDate).$ComputerName.Session.log"
@@ -483,7 +485,18 @@ function Write-Log {
 		}
 	}
 }
-
+function New-Directory{
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]
+		$Path
+	)
+	if(-not (Test-Path -LiteralPath $Path -PathType Container)){
+		New-Item -Type Directory -Path $Path -Force | Out-Null
+	}
+	return (Get-Item $Path).FullName
+}
 function RotateSessionLog {
 	[CmdletBinding()]
 	param
