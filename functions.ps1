@@ -64,6 +64,66 @@ function Push-File {
 	$Transfer.Check()
 	return $Transfer
 }
+function Get-AzureBlobFile {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$StorageAccountName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$StorageAccountKey,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Container,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SourceFileName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$DestinationFileFullPath
+	)
+
+	$Context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+
+	$Results = Get-AzStorageBlobContent -Context $Context -Container $Container -Blob $SourceFileName -Destination $DestinationFileFullPath -Confirm:$false -Force
+
+	return $Results
+}
+function Push-AzureBlobFile {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$StorageAccountName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$StorageAccountKey,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Container,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SourceFileFullPath,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$DestinationFileName
+	)
+
+	$Context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+
+	$Results = Set-AzStorageBlobContent -Context $Context -Container $Container -File $SourceFileFullPath -Blob $DestinationFileName -Confirm:$false -Force
+
+	return $Results
+}
 function New-TransferOptions {
 	[CmdletBinding()]
 	param
@@ -485,14 +545,14 @@ function Write-Log {
 		}
 	}
 }
-function New-Directory{
+function New-Directory {
 	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory=$true)]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$Path
 	)
-	if(-not (Test-Path -LiteralPath $Path -PathType Container)){
+	if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
 		New-Item -Type Directory -Path $Path -Force | Out-Null
 	}
 	return (Get-Item $Path).FullName
