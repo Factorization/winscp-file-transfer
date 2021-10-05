@@ -639,13 +639,12 @@ function Send-SuccessEmail {
 	param
 	(
 		[string]$JobName,
+		[string]$From,
 		[string[]]$To,
 		[string]$Message,
 		[string]$SmtpServer
 	)
-	$Domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
 	$Subject = "Success - $JobName"
-	$From = "File Transfer <$env:COMPUTERNAME@$Domain>"
 	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
 }
 
@@ -654,13 +653,12 @@ function Send-FailureEmail {
 	param
 	(
 		[string]$JobName,
+		[string]$From,
 		[string[]]$To,
 		[string]$Message,
 		[string]$SmtpServer
 	)
-	$Domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
 	$Subject = "Failure - $JobName"
-	$From = "File Transfer <$env:COMPUTERNAME@$Domain>"
 	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
 }
 
@@ -717,6 +715,10 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$AllEmail,
 
 		[Parameter()]
+		[string]
+		$FromEmail,
+
+		[Parameter()]
 		[switch]
 		$SendSuccessEmail,
 
@@ -738,7 +740,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to open session to FTP server $FtpServer. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
 		Close-Session -Session $FtpSession -SuppressErrors
 		return
 	}
@@ -755,7 +757,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to enumerate files on FTP server $FtpServer. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
 		Close-Session -Session $FtpSession -SuppressErrors
 		return
 	}
@@ -806,7 +808,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 			$Err = $_
 			$ErrMsg = "Failed to copy file '$FtpFileFullName' to temp file '$TempFileFullName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
-			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
 			$TransferLogEntry.Status = "Failed"
 			$TransferLogEntry.Error = $ErrMsg
 			Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
@@ -827,7 +829,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 			$Err = $_
 			$ErrMsg = "Failed to copy temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
-			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
 			$TransferLogEntry.Status = "Failed"
 			$TransferLogEntry.Error = $ErrMsg
 			Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
@@ -837,7 +839,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		# Email success
 		if ($SendSuccessEmail) {
 			Write-Log -JobName $JobName -Type info -Message "Sending success email..."
-			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer
+			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer -From $FromEmail
 			Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
 		}
 
@@ -857,7 +859,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to close session to FTP server $FtpServer. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
 	}
 }
 

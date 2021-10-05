@@ -86,20 +86,25 @@ Param(
     [String[]]
     $AdminEmail,
 
-    # Keep all files
-    [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
-    [switch]
-    $KeepFiles,
+    # Admin Email Addresses
+    [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
+    [String]
+    $FromEmail,
+
+    # Email mail server
+    [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
+    [string]
+    $SmtpServer,
 
     # Send success email
     [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
     [switch]
     $SendSuccessEmail,
 
-    # Email mail server
-    [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [string]
-    $SmtpServer
+    # Keep all files
+    [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
+    [switch]
+    $KeepFiles
 )
 
 BEGIN {
@@ -131,10 +136,11 @@ BEGIN {
     Write-Log -JobName $JobName -Type info -Message "CustomerEmail => $CustomerEmail"
     Write-Log -JobName $JobName -Type info -Message "AdminEmail => $AdminEmail"
     Write-Log -JobName $JobName -Type info -Message "AllEmail => $AllEmail"
+    Write-Log -JobName $JobName -Type info -Message "FromEmail => $FromEmail"
+    Write-Log -JobName $JobName -Type info -Message "SmtpServer => $SmtpServer"
+    Write-Log -JobName $JobName -Type info -Message "SendSuccessEmail => $SendSuccessEmail"
 
     Write-Log -JobName $JobName -Type info -Message "KeepFiles => $KeepFiles"
-    Write-Log -JobName $JobName -Type info -Message "SendSuccessEmail => $SendSuccessEmail"
-    Write-Log -JobName $JobName -Type info -Message "SmtpServer => $SmtpServer"
 
     Write-Log -JobName $JobName -Type info -Message "CurrentDirectory => $CurrentDirectory"
     Write-Log -JobName $JobName -Type info -Message "LogDirectory => $LogDirectory"
@@ -159,7 +165,7 @@ BEGIN {
             $Err = $_
             $ErrMsg = "Failed to create directory '$Dir'. Error: $Err"
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
-            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer  -From $FromEmail
             Exit
         }
     }
@@ -176,7 +182,7 @@ BEGIN {
         if (-not (Test-Path -LiteralPath $File -PathType Leaf)) {
             $ErrMsg = "File '$File' does not exist."
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
-            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
             Exit
         }
         Write-Log -JobName $JobName -Type info -Message "File exists."
@@ -192,7 +198,7 @@ BEGIN {
         $Err = $_
         $ErrMsg = "Failed to import FTP credential from '$FtpCredentialPath'. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
         Exit
     }
     Write-Log -JobName $JobName -Type info -Message "Importing Azure blob key from '$AzureBlobKeyPath'..."
@@ -204,7 +210,7 @@ BEGIN {
         $Err = $_
         $ErrMsg = "Failed to import Azure blob key from '$AzureBlobKeyPath'. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
         Exit
     }
 
@@ -218,7 +224,7 @@ BEGIN {
         $Err = $_
         $ErrMsg = "Failed to rotate session logs. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -From $FromEmail
     }
 }
 PROCESS {
@@ -228,7 +234,7 @@ PROCESS {
                 -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
                 -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
                 -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
-                -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer
+                -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail
         }
         elseif ($Direction -eq "FromAzureBlobToFtp") {
 
@@ -236,7 +242,7 @@ PROCESS {
         else {
             $ErrMsg = "Invalid direction '$Direction'. Exiting."
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
-            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
             Close-Session -Session $SourceSession -SuppressErrors
             Exit
         }
@@ -245,7 +251,7 @@ PROCESS {
         $Err = $_
         $ErrMsg = "Unhandled exception. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
     }
     Finally {
         Write-Log -JobName $JobName -Type info -Message "Closing any open sessions..."
