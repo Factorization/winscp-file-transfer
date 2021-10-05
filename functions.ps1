@@ -1038,7 +1038,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 		Try {
 			$TransferOptions = $null
 			$PushResults = Push-File -File $TempFileFullName -Destination $FtpFileFullName -Session $FtpSession -TransferOptions $TransferOptions -DeleteFile:$DeleteFiles
-			if ($PushResult.Transfer.Length -ne 1) {
+			if ($PushResults.Transfer.Length -ne 1) {
 				Throw "Number of files transferred is not equal to 1."
 			}
 			Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
