@@ -211,8 +211,8 @@ BEGIN {
     # Rotate WinSCP session log
     Write-Log -JobName $JobName -Type info -Message "Rotating WinSCP session logs..."
     Try {
-        Rotate-SessionLog $SourceSessionLogDirectory
-        Rotate-SessionLog $DestinationSessionLogDirectory
+        RotateSessionLog $SourceSessionLogDirectory
+        RotateSessionLog $DestinationSessionLogDirectory
         Write-Log -JobName $JobName -Type info -Message "Successfully rotated WinSCP session logs."
     }
     Catch {
