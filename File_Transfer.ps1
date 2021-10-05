@@ -259,11 +259,6 @@ PROCESS {
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
         Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
     }
-    Finally {
-        Write-Log -JobName $JobName -Type info -Message "Closing any open sessions..."
-        Close-Session -Session $SourceSession, $DestinationSession -SuppressErrors
-        Write-Log -JobName $JobName -Type info -Message "Done closing sessions."
-    }
 }
 END {
     Write-Log -JobName $JobName -Type info -Message "Script end."
