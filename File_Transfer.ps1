@@ -1,25 +1,49 @@
 <#
  .Synopsis
-	A brief description of the script
+	A script to transfer files from an FTP server to Azure blob storage or from Azure blob storage to FTP server.
 
  .Description
-	A detailed description of the script
+	This script uses the WinSCP DLL and the Azure az.storage module to copy files from FTP to Azure blob storage and vice versa.
 
- .Parameter Parameter1
-	A string value parameter, with a default value of 'Default String Value'
 
  .Example
-	Example of Parameter1
+	.\File_Transfer.ps1 -JobName "TestFtpToAzure" `
+                    -FtpServer "ftp1-ip.westus2.cloudapp.azure.com" `
+                    -FtpFolder "/test2" `
+                    -FtpCredentialPath .\ftpcred.xml `
+                    -AzureStorageAccountName "jeffazureftp" `
+                    -AzureContainerName "to-auto-hr" `
+                    -AzureBlobKeyPath .\azblobkey.xml `
+                    -Direction "FromFtpToAzureBlob" `
+                    -CustomerEmail "jkraemer@ens-inc.com" `
+                    -AdminEmail "jkraemer@ens-inc.com" `
+                    -SendSuccessEmail:$true `
+                    -SmtpServer "10.10.10.15" `
+                    -KeepFiles:$false `
+                    -FromEmail "file_transfer@ens-inc.com" `
+                    -SmtpAuthCredentialPath .\smtpcred.xml
+
+    Copies all the files from the FTP server "ftp1-ip.westus2.cloudapp.azure.com" in folder "/test2" to the Azure storage account "jeffazureftp" in container "to-auto-hr". It will delete the files from the source and send a success email for each file copied.
 
  .Example
-	Example of Parameter2
+	.\File_Transfer.ps1 -JobName "TestAzureToFtp" `
+                    -FtpServer "ftp1-ip.westus2.cloudapp.azure.com" `
+                    -FtpFolder "/test1" `
+                    -FtpCredentialPath .\ftpcred.xml `
+                    -AzureStorageAccountName "jeffazureftp" `
+                    -AzureContainerName "from-auto-hr" `
+                    -AzureBlobKeyPath .\azblobkey.xml `
+                    -Direction "FromAzureBlobToFtp" `
+                    -CustomerEmail "jkraemer@ens-inc.com" `
+                    -AdminEmail "jkraemer@ens-inc.com" `
+                    -SendSuccessEmail:$true `
+                    -SmtpServer "10.10.10.15" `
+                    -KeepFiles:$false `
+                    -FromEmail "file_transfer@ens-inc.com" `
+                    -SmtpAuthCredentialPath .\smtpcred.xml
 
- .Example
-	Example of Int
-
+    Copies all the files from the Azure storage account "jeffazureftp" in container "from-auto-hr" to the FTP server "ftp1-ip.westus2.cloudapp.azure.com" in folder "/test1". It will delete the files from the source and send a success email for each file copied.
  .Notes
-	Place Notes here
-
 	#######################################################
 	#  .                                               .  #
 	#  .                Written By:                    .  #
