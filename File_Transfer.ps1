@@ -111,6 +111,8 @@ Param(
     [switch]
     $KeepFiles
 )
+#Requires -RunAsAdministrator
+#Requires -Modules az.storage
 
 BEGIN {
     $ErrorActionPreference = 'Stop'
