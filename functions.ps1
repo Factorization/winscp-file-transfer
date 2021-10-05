@@ -85,12 +85,20 @@ function Get-AzureBlobFile {
 
 		[Parameter(Mandatory = $true)]
 		[string]
-		$DestinationFileFullPath
+		$DestinationFileFullPath,
+
+		[Parameter()]
+		[switch]
+		$DeleteFile
 	)
 
 	$Context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
 
 	$Results = Get-AzStorageBlobContent -Context $Context -Container $Container -Blob $SourceFileName -Destination $DestinationFileFullPath -Confirm:$false -Force
+
+	if ($DeleteFile) {
+		Remove-AzStorageBlob -Context $Context -Container $Container -Blob $SourceFileName -Confirm:$false -Force
+	}
 
 	return $Results
 }
@@ -115,12 +123,20 @@ function Push-AzureBlobFile {
 
 		[Parameter(Mandatory = $true)]
 		[string]
-		$DestinationFileName
+		$DestinationFileName,
+
+		[Parameter()]
+		[switch]
+		$DeleteFile
 	)
 
 	$Context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
 
 	$Results = Set-AzStorageBlobContent -Context $Context -Container $Container -File $SourceFileFullPath -Blob $DestinationFileName -Confirm:$false -Force
+
+	if ($DeleteFile) {
+		Remove-Item -LiteralPath $SourceFileFullPath -Confirm:$false -Force | Out-Null
+	}
 
 	return $Results
 }
@@ -402,6 +418,29 @@ function Get-RemoteFilesList {
 	return $Files
 }
 
+function Get-AzureFilesList {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$StorageAccountName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$StorageAccountKey,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$Container
+	)
+
+	$Context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey
+
+	$Files = Get-AzStorageBlob -Context $Context -Container $Container | Where-Object { $_.name -notlike "*/*" }
+
+	return $Files
+}
+
 function Get-WinScpDll {
 	param(
 		$Path = "$PSScriptRoot\bin"
@@ -509,14 +548,20 @@ function Write-Log {
 	(
 		[Parameter(Mandatory = $true, Position = 0)]
 		[ValidateSet('Info', 'Error', IgnoreCase = $true)]
-		[string]$Type,
+		[string]
+		$Type,
 
-		[Parameter(Position = 1)]
-		[string]$Message
+		[Parameter(Mandatory = $true, Position = 1)]
+		[string]
+		$Message,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$JobName
 	)
 
 	$Date = Get-Date -Format FileDate
-	$LogPath = "$PSScriptRoot\logs"
+	$LogPath = "$PSScriptRoot\logs\$JobName"
 	$LogFileName = Join-Path $LogPath "$Date.log"
 	if (!(Test-Path $logPath)) {
 		New-Item -Type Directory $LogPath -Force | Out-Null
@@ -573,4 +618,272 @@ function RotateSessionLog {
 			}
 		}
 	}
+}
+
+function Send-Email {
+	[CmdletBinding()]
+	param
+	(
+		[string[]]$To,
+		[string]$From,
+		[string]$Subject,
+		[string]$Body,
+		[string]$SmtpServer
+	)
+	Send-MailMessage -To $To -From $From -Subject $Subject -Body $Body -BodyAsHtml:$True -SmtpServer $SmtpServer
+}
+
+
+function Send-SuccessEmail {
+	[CmdletBinding()]
+	param
+	(
+		[string]$JobName,
+		[string[]]$To,
+		[string]$Message,
+		[string]$SmtpServer
+	)
+	$Domain = Get-WmiObject -Class Win32_ComputerSystem
+	$Subject = "Success - $JobName"
+	$From = "File Transfer <$env:COMPUTERNAME@$Domain>"
+	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
+}
+
+function Send-FailureEmail {
+	[CmdletBinding()]
+	param
+	(
+		[string]$JobName,
+		[string[]]$To,
+		[string]$Message,
+		[string]$SmtpServer
+	)
+	$Domain = Get-WmiObject -Class Win32_ComputerSystem
+	$Subject = "Failure - $JobName"
+	$From = "File Transfer <$env:COMPUTERNAME@$Domain>"
+	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
+}
+
+
+Copy-FilesFromFtpToAzureBlob {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[string]
+		$JobName,
+
+		[Parameter()]
+		[string]
+		$FtpServer,
+
+		[Parameter()]
+		[string]
+		$FtpFolder,
+
+		[Parameter()]
+		[PSCredential]
+		$FtpCredential,
+
+		[Parameter()]
+		[string]
+		$FtpSessionLogDirectory,
+
+		[Parameter()]
+		[string]
+		$TempDirectory,
+
+		[Parameter()]
+		[string]
+		$AzureStorageAccountName,
+
+		[Parameter()]
+		[string]
+		$AzureStorageAccountKey,
+
+		[Parameter()]
+		[string]
+		$AzureContainerName,
+
+		[Parameter()]
+		[string]
+		$TransferLogFile,
+
+		[Parameter()]
+		[string[]]
+		$CustomerEmail,
+
+		[Parameter()]
+		[string[]]
+		$AllEmail,
+
+		[Parameter()]
+		[switch]
+		$SendSuccessEmail,
+
+		[Parameter()]
+		[switch]
+		$DeleteFiles,
+
+		[Parameter()]
+		[string]
+		$SmtpServer
+	)
+	# Create FTP Session
+	Write-Log -JobName $JobName -Type info -Message "Opening session to FTP server $FtpServer..."
+	Try {
+		$FtpSession = Open-FtpsSession -ComputerName $FtpServer -Credential $FtpCredential -SessionLogPath $FtpSessionLogDirectory
+		Write-Log -JobName $JobName -Type info -Message "Successfully opened session to FTP server."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to open session to FTP server $FtpServer. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+		Close-Session -Session $FtpSession -SuppressErrors
+		return
+	}
+
+	# Enumerate Files
+	Write-Log -JobName $JobName -Type info -Message "Enumerating files on FTP server $FtpServer at path '$FtpFolder'..."
+	Try {
+		$Files = Get-RemoteFilesList -Session $FtpSession -Path $FtpFolder
+		Write-Log -JobName $JobName -Type info -Message "Successfully enumerated files on FTP server."
+		$FilesCount = $Files | Measure-Object | Select-Object -ExpandProperty Count
+		Write-Log -JobName $JobName -Type info -Message "Found $FilesCount file(s) on FTP server."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to enumerate files on FTP server $FtpServer. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+		Close-Session -Session $FtpSession -SuppressErrors
+		return
+	}
+
+	# Only continue if files are on FTP server
+	if ($FilesCount -eq 0) {
+		Write-Log -JobName $JobName -Type info -Message "No files found on $FtpServer at path '$FtpFolder'."
+		Close-Session -Session $FtpSession -SuppressErrors
+		return
+	}
+
+	# Loop over files
+	# Any continues in this foreach loop do NOT close sessions.
+	Foreach ($File in $Files) {
+		$FtpFileFullName = $File.FullName
+		$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
+		$AzureBlobFileName = $File.Name
+		$TransferLogEntry = [PSCustomObject]@{
+			Date                = (Get-Date)
+			Direction           = "FromFtpToAzureBlob"
+			JobName             = $JobName
+			FtpServer           = $FtpServer
+			FtpFile             = $FtpFileFullName
+			TempFile            = $TempFileFullName
+			AzureStorageAccount = $AzureStorageAccountName
+			AzureContainer      = $AzureContainerName
+			AzureBloFile        = $AzureBlobFileName
+			Status              = ""
+			Error               = ""
+		}
+
+		# Log variables
+		Write-Log -JobName $JobName -Type info -Message "FtpFileFullName => $FtpFileFullName"
+		Write-Log -JobName $JobName -Type info -Message "TempFileFullName => $TempFileFullName"
+		Write-Log -JobName $JobName -Type info -Message "AzureBlobFileName => $AzureBlobFileName"
+
+		# Copy FTP File to tmp
+		Write-Log -JobName $JobName -Type info -Message "Copying file '$FtpFileFullName' to temp file '$TempFileFullName'..."
+		Try {
+			$TransferOptions = $null
+			$GetResults = Get-File -File $FtpFileFullName -Destination $TempFileFullName -Session $FtpSession -TransferOptions $TransferOptions -DeleteFile:$DeleteFiles
+			if ($GetResults.Transfers.Length -ne 1) {
+				Throw "Number of files transferred is not equal to 1."
+			}
+			Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
+		}
+		Catch {
+			$Err = $_
+			$ErrMsg = "Failed to copy file '$FtpFileFullName' to temp file '$TempFileFullName'. Error: $Err"
+			Write-Log -JobName $JobName -Type error -Message $ErrMsg
+			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+			$TransferLogEntry.Status = "Failed"
+			$TransferLogEntry.Error = $ErrMsg
+			Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+			Continue
+		}
+
+		# Copy temp file to Azure blob
+		Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'..."
+		Try {
+			$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureBlobFileName -DeleteFile:$DeleteFiles
+			if ($PushResults.Length -ne 1) {
+				Throw "Number of files transferred is not equal to 1."
+			}
+			Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
+		}
+		Catch {
+			$Err = $_
+			$ErrMsg = "Failed to copy temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'. Error: $Err"
+			Write-Log -JobName $JobName -Type error -Message $ErrMsg
+			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer
+			$TransferLogEntry.Status = "Failed"
+			$TransferLogEntry.Error = $ErrMsg
+			Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+			Continue
+		}
+
+		# Email success
+		if ($SendSuccessEmail) {
+			Write-Log -JobName $JobName -Type info -Message "Sending success email..."
+			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer
+			Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
+		}
+
+		# Write successful transfer log entry
+		$TransferLogEntry.Status = "Success"
+        $TransferLogEntry.Error = ""
+        Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+	}
+
+	# Close FTP Session
+	Write-Log -JobName $JobName -Type info -Message "Closing session to FTP server $FtpServer..."
+    Try {
+        Close-Session -Session $FtpSession
+        Write-Log -JobName $JobName -Type info -Message "Successfully closed session."
+    }
+    Catch {
+        $Err = $_
+        $ErrMsg = "Failed to close session to FTP server $FtpServer. Error: $Err"
+        Write-Log -JobName $JobName -Type error -Message $ErrMsg
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+    }
+}
+
+Copy-FilesFromAzureBlobToFtp {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[TypeName]
+		$ParameterName
+	)
+
+	# Enumerate Files in Azure blob
+
+	# Only continue if files are in Azure blob
+
+	# Create FTP Session
+
+	# Loop over files
+	# Any continues in this foreach loop do NOT close sessions.
+
+	# Copy Azure blob Files to tmp
+
+	# Copy temp file to FTP server
+
+	# Email success
+
+	# Write successful transfer log entry
+
+	# Close FTP Session
 }
