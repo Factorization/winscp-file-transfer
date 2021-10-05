@@ -819,7 +819,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		}
 		Catch {
 			$Err = $_
-			$ErrMsg = "Failed to copy file '$FtpFileFullName' to temp file '$TempFileFullName'. Error: $Err"
+			$ErrMsg = "Failed to copy FTP file '$FtpFileFullName' to temp file '$TempFileFullName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
 			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			$TransferLogEntry.Status = "Failed"
@@ -829,7 +829,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		}
 
 		# Copy temp file to Azure blob
-		Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'..."
+		Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName' file named '$AzureBlobFileName'..."
 		Try {
 			$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureBlobFileName -DeleteFile:$DeleteFiles
 			$PushResultsCount = $PushResults | Measure-Object | Select-Object -ExpandProperty Count
@@ -840,7 +840,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		}
 		Catch {
 			$Err = $_
-			$ErrMsg = "Failed to copy temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'. Error: $Err"
+			$ErrMsg = "Failed to copy temp file '$TempFileFullName' to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName' file named '$AzureBlobFileName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
 			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			$TransferLogEntry.Status = "Failed"
@@ -857,7 +857,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		# Email success
 		if ($SendSuccessEmail) {
 			Write-Log -JobName $JobName -Type info -Message "Sending success email..."
-			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File '$AzureBlobFileName' was successfully transferred to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
 		}
 	}
