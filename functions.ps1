@@ -1036,7 +1036,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 		# Copy temp file to FTP server
 		Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to FTP server '$FtpServer' with file name '$FtpFileFullName'..."
 		Try {
-			$TransferOptions = $null
+			$TransferOptions = New-TransferOptions -FilePermissions '644'
 			$PushResults = Push-File -File $TempFileFullName -Destination $FtpFileFullName -Session $FtpSession -TransferOptions $TransferOptions -DeleteFile:$DeleteFiles
 			if ($PushResults.Transfer.Length -ne 1) {
 				Throw "Number of files transferred is not equal to 1."
