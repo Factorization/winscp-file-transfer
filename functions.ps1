@@ -643,7 +643,7 @@ function Send-SuccessEmail {
 		[string]$Message,
 		[string]$SmtpServer
 	)
-	$Domain = Get-WmiObject -Class Win32_ComputerSystem
+	$Domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
 	$Subject = "Success - $JobName"
 	$From = "File Transfer <$env:COMPUTERNAME@$Domain>"
 	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
@@ -658,7 +658,7 @@ function Send-FailureEmail {
 		[string]$Message,
 		[string]$SmtpServer
 	)
-	$Domain = Get-WmiObject -Class Win32_ComputerSystem
+	$Domain = (Get-WmiObject -Class Win32_ComputerSystem).Domain
 	$Subject = "Failure - $JobName"
 	$From = "File Transfer <$env:COMPUTERNAME@$Domain>"
 	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
