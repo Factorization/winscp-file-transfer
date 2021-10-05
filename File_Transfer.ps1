@@ -37,62 +37,52 @@ Param(
 
     # Job Name
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String]
     $JobName,
 
     # FTP Server
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String]
     $FtpServer,
 
     # FTP Folder
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String]
     $FtpFolder,
 
     # FTP Credential File Path
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [string]
     $FtpCredentialPath,
 
     # Azure Storage Account Name
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String]
     $AzureStorageAccountName,
 
     # Azure Container Name
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String]
     $AzureContainerName,
 
     # Azure Blob Key File Path
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String]
     $AzureBlobKeyPath,
 
     # Direction (FromFtpToAzureBlob or FromAzureBlobToFtp)
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [ValidateSet("FromFtpToAzureBlob", "FromAzureBlobToFtp")]
     [String]
     $Direction,
 
     # Customer Email Addresses
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String[]]
     $CustomerEmail,
 
     # Admin Email Addresses
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [String[]]
     $AdminEmail,
 
@@ -108,7 +98,6 @@ Param(
 
     # Email mail server
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
-    [ValidateNotNullOrEmpty]
     [string]
     $SmtpServer
 )
