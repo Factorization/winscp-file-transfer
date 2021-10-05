@@ -59,17 +59,17 @@
 [CmdletBinding()]
 Param(
 
-    # Job Name
+    # Arbitrary name to track the job
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
     [String]
     $JobName,
 
-    # FTP Server
+    # FTP Server FQDN or IP
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
     [String]
     $FtpServer,
 
-    # FTP Folder
+    # FTP Folder path using Unix-style path (no trailing '/')
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
     [String]
     $FtpFolder,
@@ -110,7 +110,7 @@ Param(
     [String[]]
     $AdminEmail,
 
-    # Admin Email Addresses
+    # From Email Addresses
     [Parameter(Mandatory = $True, ValueFromPipeline = $False)]
     [String]
     $FromEmail,
@@ -120,17 +120,17 @@ Param(
     [string]
     $SmtpServer,
 
-    # Email Auth
+    # Email Auth Credential File Path
     [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
     [string]
     $SmtpAuthCredentialPath = "",
 
-    # Send success email
+    # Send success emails
     [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
     [switch]
     $SendSuccessEmail,
 
-    # Keep all files
+    # Keep files on source
     [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
     [switch]
     $KeepFiles
