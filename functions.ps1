@@ -1041,6 +1041,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 			if ($PushResults.Transfer.Length -ne 1) {
 				Throw "Number of files transferred is not equal to 1."
 			}
+			$PushResults
 			Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
 		}
 		Catch {
