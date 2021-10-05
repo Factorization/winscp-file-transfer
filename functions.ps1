@@ -631,6 +631,7 @@ function Send-Email {
 		[string]$SmtpServer,
 		[string]$SmtpAuthCredentialPath
 	)
+	$from = "FTP/Azure Blob Transfer <$from>"
 	if($SmtpAuthCredentialPath -and (Test-Path $SmtpAuthCredentialPath)){
 		$cred = Import-Clixml $SmtpAuthCredentialPath
 		Send-MailMessage -To $To -From $From -Subject $Subject -Body $Body -BodyAsHtml:$True -SmtpServer $SmtpServer -Credential $cred
