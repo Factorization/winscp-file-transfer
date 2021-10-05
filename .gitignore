@@ -6,3 +6,4 @@ passphrase.txt
 *.tmp
 /logs/*
 /tmp/*
+*.xml
