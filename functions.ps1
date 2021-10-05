@@ -665,7 +665,7 @@ function Send-FailureEmail {
 }
 
 
-Copy-FilesFromFtpToAzureBlob {
+Function Copy-FilesFromFtpToAzureBlob {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
@@ -842,25 +842,25 @@ Copy-FilesFromFtpToAzureBlob {
 
 		# Write successful transfer log entry
 		$TransferLogEntry.Status = "Success"
-        $TransferLogEntry.Error = ""
-        Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		$TransferLogEntry.Error = ""
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
 	}
 
 	# Close FTP Session
 	Write-Log -JobName $JobName -Type info -Message "Closing session to FTP server $FtpServer..."
-    Try {
-        Close-Session -Session $FtpSession
-        Write-Log -JobName $JobName -Type info -Message "Successfully closed session."
-    }
-    Catch {
-        $Err = $_
-        $ErrMsg = "Failed to close session to FTP server $FtpServer. Error: $Err"
-        Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
-    }
+	Try {
+		Close-Session -Session $FtpSession
+		Write-Log -JobName $JobName -Type info -Message "Successfully closed session."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to close session to FTP server $FtpServer. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer
+	}
 }
 
-Copy-FilesFromAzureBlobToFtp {
+Function Copy-FilesFromAzureBlobToFtp {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
