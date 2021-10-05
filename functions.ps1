@@ -990,7 +990,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 	Foreach ($File in $Files) {
 		$AzureBlobFileName = $File.Name
 		$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
-		$FtpFileFullName = Join-Path $FtpFolder $AzureBlobFileName
+		$FtpFileFullName = "$($FtpFolder.TrimEnd('/'))/$AzureBlobFileName"
 		$TransferLogEntry = [PSCustomObject]@{
 			Date                = (Get-Date)
 			Direction           = "FromAzureBlobToFtp"
@@ -1038,8 +1038,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 		Try {
 			$TransferOptions = New-TransferOptions -FilePermissions '644'
 			$PushResults = Push-File -File $TempFileFullName -Destination $FtpFileFullName -Session $FtpSession -TransferOptions $TransferOptions -DeleteFile:$DeleteFiles
-			$PushResults
-			if ($PushResults.Transfer.Length -ne 1) {
+			if ($PushResults.Transfers.Length -ne 1) {
 				Throw "Number of files transferred is not equal to 1."
 			}
 			Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
