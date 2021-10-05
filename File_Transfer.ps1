@@ -96,6 +96,11 @@ Param(
     [string]
     $SmtpServer,
 
+    # Email Auth
+    [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
+    [string]
+    $SmtpAuthCredentialPath = "",
+
     # Send success email
     [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
     [switch]
@@ -138,6 +143,7 @@ BEGIN {
     Write-Log -JobName $JobName -Type info -Message "AllEmail => $AllEmail"
     Write-Log -JobName $JobName -Type info -Message "FromEmail => $FromEmail"
     Write-Log -JobName $JobName -Type info -Message "SmtpServer => $SmtpServer"
+    Write-Log -JobName $JobName -Type info -Message "SmtpAuthCredentialPath => $SmtpAuthCredentialPath"
     Write-Log -JobName $JobName -Type info -Message "SendSuccessEmail => $SendSuccessEmail"
 
     Write-Log -JobName $JobName -Type info -Message "KeepFiles => $KeepFiles"
@@ -165,7 +171,7 @@ BEGIN {
             $Err = $_
             $ErrMsg = "Failed to create directory '$Dir'. Error: $Err"
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
-            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer  -From $FromEmail
+            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer  -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
             Exit
         }
     }
@@ -182,7 +188,7 @@ BEGIN {
         if (-not (Test-Path -LiteralPath $File -PathType Leaf)) {
             $ErrMsg = "File '$File' does not exist."
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
-            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
             Exit
         }
         Write-Log -JobName $JobName -Type info -Message "File exists."
@@ -198,7 +204,7 @@ BEGIN {
         $Err = $_
         $ErrMsg = "Failed to import FTP credential from '$FtpCredentialPath'. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
         Exit
     }
     Write-Log -JobName $JobName -Type info -Message "Importing Azure blob key from '$AzureBlobKeyPath'..."
@@ -210,7 +216,7 @@ BEGIN {
         $Err = $_
         $ErrMsg = "Failed to import Azure blob key from '$AzureBlobKeyPath'. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
         Exit
     }
 
@@ -224,7 +230,7 @@ BEGIN {
         $Err = $_
         $ErrMsg = "Failed to rotate session logs. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -From $FromEmail
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
     }
 }
 PROCESS {
@@ -242,7 +248,7 @@ PROCESS {
         else {
             $ErrMsg = "Invalid direction '$Direction'. Exiting."
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
-            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+            Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
             Close-Session -Session $SourceSession -SuppressErrors
             Exit
         }
@@ -251,7 +257,7 @@ PROCESS {
         $Err = $_
         $ErrMsg = "Unhandled exception. Error: $Err"
         Write-Log -JobName $JobName -Type error -Message $ErrMsg
-        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+        Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
     }
     Finally {
         Write-Log -JobName $JobName -Type info -Message "Closing any open sessions..."

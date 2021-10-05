@@ -628,9 +628,16 @@ function Send-Email {
 		[string]$From,
 		[string]$Subject,
 		[string]$Body,
-		[string]$SmtpServer
+		[string]$SmtpServer,
+		[string]$SmtpAuthCredentialPath
 	)
-	Send-MailMessage -To $To -From $From -Subject $Subject -Body $Body -BodyAsHtml:$True -SmtpServer $SmtpServer
+	if($SmtpAuthCredentialPath -and (Test-Path $SmtpAuthCredentialPath)){
+		$cred = Import-Clixml $SmtpAuthCredentialPath
+		Send-MailMessage -To $To -From $From -Subject $Subject -Body $Body -BodyAsHtml:$True -SmtpServer $SmtpServer -Credential $cred
+	}
+	else{
+		Send-MailMessage -To $To -From $From -Subject $Subject -Body $Body -BodyAsHtml:$True -SmtpServer $SmtpServer
+	}
 }
 
 
@@ -642,10 +649,11 @@ function Send-SuccessEmail {
 		[string]$From,
 		[string[]]$To,
 		[string]$Message,
-		[string]$SmtpServer
+		[string]$SmtpServer,
+		[string]$SmtpAuthCredentialPath
 	)
 	$Subject = "Success - $JobName"
-	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
+	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 }
 
 function Send-FailureEmail {
@@ -656,10 +664,11 @@ function Send-FailureEmail {
 		[string]$From,
 		[string[]]$To,
 		[string]$Message,
-		[string]$SmtpServer
+		[string]$SmtpServer,
+		[string]$SmtpAuthCredentialPath
 	)
 	$Subject = "Failure - $JobName"
-	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer
+	Send-Email -To $To -From $From -Subject $Subject -Body $Message -SmtpServer $SmtpServer -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 }
 
 
@@ -719,6 +728,10 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$FromEmail,
 
 		[Parameter()]
+		[string]
+		$SmtpAuthCredentialPath,
+
+		[Parameter()]
 		[switch]
 		$SendSuccessEmail,
 
@@ -740,7 +753,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to open session to FTP server $FtpServer. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Close-Session -Session $FtpSession -SuppressErrors
 		return
 	}
@@ -757,7 +770,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to enumerate files on FTP server $FtpServer. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Close-Session -Session $FtpSession -SuppressErrors
 		return
 	}
@@ -808,7 +821,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 			$Err = $_
 			$ErrMsg = "Failed to copy file '$FtpFileFullName' to temp file '$TempFileFullName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
-			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			$TransferLogEntry.Status = "Failed"
 			$TransferLogEntry.Error = $ErrMsg
 			Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
@@ -829,7 +842,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 			$Err = $_
 			$ErrMsg = "Failed to copy temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
-			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			$TransferLogEntry.Status = "Failed"
 			$TransferLogEntry.Error = $ErrMsg
 			Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
@@ -839,7 +852,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		# Email success
 		if ($SendSuccessEmail) {
 			Write-Log -JobName $JobName -Type info -Message "Sending success email..."
-			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer -From $FromEmail
+			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
 		}
 
@@ -859,7 +872,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to close session to FTP server $FtpServer. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail
+		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 	}
 }
 
