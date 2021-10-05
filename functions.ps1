@@ -849,17 +849,17 @@ Function Copy-FilesFromFtpToAzureBlob {
 			Continue
 		}
 
+		# Write successful transfer log entry
+		$TransferLogEntry.Status = "Success"
+		$TransferLogEntry.Error = ""
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+
 		# Email success
 		if ($SendSuccessEmail) {
 			Write-Log -JobName $JobName -Type info -Message "Sending success email..."
 			Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File successfully transferred to Azure blob with the name '$AzureBlobFileName'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
 		}
-
-		# Write successful transfer log entry
-		$TransferLogEntry.Status = "Success"
-		$TransferLogEntry.Error = ""
-		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
 	}
 
 	# Close FTP Session
