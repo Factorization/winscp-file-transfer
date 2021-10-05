@@ -243,7 +243,11 @@ PROCESS {
                 -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
         }
         elseif ($Direction -eq "FromAzureBlobToFtp") {
-
+            Copy-FilesFromAzureBlobToFtp -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder `
+                -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
+                -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
+                -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
+                -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
         }
         else {
             $ErrMsg = "Invalid direction '$Direction'. Exiting."
