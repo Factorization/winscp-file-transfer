@@ -817,7 +817,8 @@ Function Copy-FilesFromFtpToAzureBlob {
 		Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to Azure blob with the name '$AzureBlobFileName'..."
 		Try {
 			$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureBlobFileName -DeleteFile:$DeleteFiles
-			if ($PushResults.Length -ne 1) {
+			$PushResultsCount = $PushResults | Measure-Object | Select-Object -ExpandProperty Count
+			if ($PushResultsCount -ne 1) {
 				Throw "Number of files transferred is not equal to 1."
 			}
 			Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
