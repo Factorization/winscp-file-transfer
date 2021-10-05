@@ -744,14 +744,14 @@ Function Copy-FilesFromFtpToAzureBlob {
 		$SmtpServer
 	)
 	# Create FTP Session
-	Write-Log -JobName $JobName -Type info -Message "Opening session to FTP server $FtpServer..."
+	Write-Log -JobName $JobName -Type info -Message "Opening session to FTP server '$FtpServer'..."
 	Try {
 		$FtpSession = Open-FtpsSession -ComputerName $FtpServer -Credential $FtpCredential -SessionLogPath $FtpSessionLogDirectory
 		Write-Log -JobName $JobName -Type info -Message "Successfully opened session to FTP server."
 	}
 	Catch {
 		$Err = $_
-		$ErrMsg = "Failed to open session to FTP server $FtpServer. Error: $Err"
+		$ErrMsg = "Failed to open session to FTP server '$FtpServer'. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
 		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Close-Session -Session $FtpSession -SuppressErrors
@@ -759,7 +759,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 	}
 
 	# Enumerate Files
-	Write-Log -JobName $JobName -Type info -Message "Enumerating files on FTP server $FtpServer at path '$FtpFolder'..."
+	Write-Log -JobName $JobName -Type info -Message "Enumerating files on FTP server '$FtpServer' at path '$FtpFolder'..."
 	Try {
 		$Files = Get-RemoteFilesList -Session $FtpSession -Path $FtpFolder
 		Write-Log -JobName $JobName -Type info -Message "Successfully enumerated files on FTP server."
@@ -768,7 +768,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 	}
 	Catch {
 		$Err = $_
-		$ErrMsg = "Failed to enumerate files on FTP server $FtpServer. Error: $Err"
+		$ErrMsg = "Failed to enumerate files on FTP server '$FtpServer'. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
 		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Close-Session -Session $FtpSession -SuppressErrors
@@ -777,7 +777,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 
 	# Only continue if files are on FTP server
 	if ($FilesCount -eq 0) {
-		Write-Log -JobName $JobName -Type info -Message "No files found on $FtpServer at path '$FtpFolder'."
+		Write-Log -JobName $JobName -Type info -Message "No files found on '$FtpServer' at path '$FtpFolder'."
 		Close-Session -Session $FtpSession -SuppressErrors
 		return
 	}
@@ -863,14 +863,14 @@ Function Copy-FilesFromFtpToAzureBlob {
 	}
 
 	# Close FTP Session
-	Write-Log -JobName $JobName -Type info -Message "Closing session to FTP server $FtpServer..."
+	Write-Log -JobName $JobName -Type info -Message "Closing session to FTP server '$FtpServer'..."
 	Try {
 		Close-Session -Session $FtpSession
 		Write-Log -JobName $JobName -Type info -Message "Successfully closed session."
 	}
 	Catch {
 		$Err = $_
-		$ErrMsg = "Failed to close session to FTP server $FtpServer. Error: $Err"
+		$ErrMsg = "Failed to close session to FTP server '$FtpServer'. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
 		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 	}
@@ -949,7 +949,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 	)
 
 	# Enumerate Files in Azure blob
-	Write-Log -JobName $JobName -Type info -Message "Enumerating files on Azure Storage account $AzureStorageAccountName in container $AzureContainerName..."
+	Write-Log -JobName $JobName -Type info -Message "Enumerating files on Azure Storage account '$AzureStorageAccountName' in container '$AzureContainerName'..."
 	Try {
 		$Files = Get-AzureFilesList -Container $AzureContainerName -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey
 		Write-Log -JobName $JobName -Type info -Message "Successfully enumerated files on Azure storage account container."
@@ -958,7 +958,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 	}
 	Catch {
 		$Err = $_
-		$ErrMsg = "Failed to enumerate files on Azure Storage account $AzureStorageAccountName in container $AzureContainerName. Error: $Err"
+		$ErrMsg = "Failed to enumerate files on Azure Storage account '$AzureStorageAccountName' in container '$AzureContainerName'. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
 		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		return
@@ -966,19 +966,19 @@ Function Copy-FilesFromAzureBlobToFtp {
 
 	# Only continue if files are in Azure blob
 	if ($FilesCount -eq 0) {
-		Write-Log -JobName $JobName -Type info -Message "No files found on Azure Storage account $AzureStorageAccountName in container $AzureContainerName."
+		Write-Log -JobName $JobName -Type info -Message "No files found on Azure Storage account '$AzureStorageAccountName' in container '$AzureContainerName'."
 		return
 	}
 
 	# Create FTP Session
-	Write-Log -JobName $JobName -Type info -Message "Opening session to FTP server $FtpServer..."
+	Write-Log -JobName $JobName -Type info -Message "Opening session to FTP server '$FtpServer'..."
 	Try {
 		$FtpSession = Open-FtpsSession -ComputerName $FtpServer -Credential $FtpCredential -SessionLogPath $FtpSessionLogDirectory
 		Write-Log -JobName $JobName -Type info -Message "Successfully opened session to FTP server."
 	}
 	Catch {
 		$Err = $_
-		$ErrMsg = "Failed to open session to FTP server $FtpServer. Error: $Err"
+		$ErrMsg = "Failed to open session to FTP server '$FtpServer'. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
 		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Close-Session -Session $FtpSession -SuppressErrors
@@ -1011,7 +1011,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 		Write-Log -JobName $JobName -Type info -Message "FtpFileFullName => $FtpFileFullName"
 
 		# Copy Azure blob Files to tmp
-		Write-Log -JobName $JobName -Type info -Message "Copying file '$AzureBlobFileName' from Azure storage account $AzureStorageAccountName in container $AzureContainerName to temp file '$TempFileFullName'..."
+		Write-Log -JobName $JobName -Type info -Message "Copying file '$AzureBlobFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'..."
 		Try {
 			# $TransferOptions = $null
 			# $GetResults = Get-File -File $FtpFileFullName -Destination $TempFileFullName -Session $FtpSession -TransferOptions $TransferOptions -DeleteFile:$DeleteFiles
@@ -1024,7 +1024,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 		}
 		Catch {
 			$Err = $_
-			$ErrMsg = "Failed to copy file '$AzureBlobFileName' from Azure storage account $AzureStorageAccountName in container $AzureContainerName to temp file '$TempFileFullName'. Error: $Err"
+			$ErrMsg = "Failed to copy file '$AzureBlobFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'. Error: $Err"
 			Write-Log -JobName $JobName -Type error -Message $ErrMsg
 			Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 			$TransferLogEntry.Status = "Failed"
