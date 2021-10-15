@@ -10,6 +10,8 @@ To use these scripts, you will need to complete the following setup.
 
     ```PowerShell
     # Open PowerShell as an Administrator
+    $TLS12Protocol = [System.Net.SecurityProtocolType] 'Ssl3 , Tls12'
+    [System.Net.ServicePointManager]::SecurityProtocol = $TLS12Protocol
     Install-Module az.storage
     ```
 
