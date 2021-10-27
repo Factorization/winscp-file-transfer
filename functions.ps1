@@ -1318,7 +1318,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
@@ -1338,7 +1338,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
