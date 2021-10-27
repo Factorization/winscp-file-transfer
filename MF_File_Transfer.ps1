@@ -129,7 +129,9 @@ BEGIN {
     $FtpSessionLogDirectory = Join-Path $LogDirectory "ftp_session"
     $TransferLogFile = Join-Path $LogDirectory "$($JobName)_Transfer_Log.csv"
     $DeleteFiles = -not $KeepFiles
-    $AllEmail = @($AdminEmail) + @($CustomerEmail)
+    $AllEmail = @()
+    $AllEmail += @($AdminEmail)
+    $AllEmail += @($CustomerEmail)
 
     # Start Logging
     Write-Log -JobName $JobName -Type info -Message "Script start..."
@@ -255,6 +257,7 @@ BEGIN {
 PROCESS {
     Try {
         if ($Direction -eq "FromFtpToAzureBlob") {
+            write-h
             # Copy-FilesFromFtpToAzureBlob -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder `
             #     -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
             #     -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
