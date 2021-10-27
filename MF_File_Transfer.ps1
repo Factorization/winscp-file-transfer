@@ -257,7 +257,6 @@ BEGIN {
 PROCESS {
     Try {
         if ($Direction -eq "FromFtpToAzureBlob") {
-            write-h
             # Copy-FilesFromFtpToAzureBlob -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder `
             #     -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
             #     -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
