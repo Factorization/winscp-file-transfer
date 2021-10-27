@@ -104,7 +104,7 @@ function New-MFGetFileTransferScript {
 
 	$UserName = $Credential.UserName
 	$Password = $Credential.GetNetworkCredential().Password
-	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $FtpServer
+	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
 	$Script = @"
 option batch on
 option confirm off
