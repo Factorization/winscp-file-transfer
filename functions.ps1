@@ -103,8 +103,8 @@ function New-MFGetFileTransferScript {
 	$UserName = $Credential.UserName
 	$Password = $Credential.GetNetworkCredential().Password
 	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
-	if($DeleteFile){$delete = "-delete"}
-	else{$delete = ""}
+	if ($DeleteFile) { $delete = "-delete" }
+	else { $delete = "" }
 	$Script = @"
 option batch on
 option confirm off
@@ -1303,6 +1303,33 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	# Log variables
 	Write-Log -JobName $JobName -Type info -Message "TempFileFullName => $TempFileFullName"
 	Write-Log -JobName $JobName -Type info -Message "TempScriptFullName => $TempScriptFullName"
+
+	# Check for a successful previous transfer
+	Write-Log -JobName $JobName -Type info -Message "Checking if file '$FtpFile' was already successfully transferred today..."
+	Try {
+		if (Test-Path -LiteralPath $TransferLogFile) {
+			$Results = Import-Csv -LiteralPath $TransferLogFile | Where-Object { (Get-Date $_.Date) -gt (Get-Date).Date } | Where-Object { $_.FtpFile -eq $FtpFile -and $_.Status -eq "Success" }
+			$ResultsCount = $Results | Measure-Object | Select-Object -ExpandProperty Count
+			if($ResultsCount -ge 1){
+				Write-Log -JobName $JobName -Type info -Message "File was already transferred successfully."
+				return
+			}
+			else{
+				Write-Log -JobName $JobName -Type info -Message "File has not been transferred today."
+			}
+		}
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to check if file '$FtpFile' was already transferred. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		$TransferLogEntry.Status = "Failed"
+		$TransferLogEntry.Error = $ErrMsg
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		return
+	}
 
 	# Create FTP File Script
 	Write-Log -JobName $JobName -Type info -Message "Creating script file '$TempScriptFullName' to transfer FTP file '$FtpFile' to temp file '$TempFileFullName'..."
