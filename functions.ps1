@@ -1307,7 +1307,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	# Create FTP File Script
 	Write-Log -JobName $JobName -Type info -Message "Creating script file '$TempScriptFullName' to transfer FTP file '$FtpFile' to temp file '$TempFileFullName'..."
 	Try {
-		New-MFGetFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -DestinationFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName
+		New-MFGetFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -DestinationFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName -DeleteFile:$DeleteFiles
 		Write-Log -JobName $JobName -Type info -Message "Successfully created script file."
 	}
 	Catch {
