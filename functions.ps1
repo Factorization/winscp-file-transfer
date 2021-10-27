@@ -105,14 +105,14 @@ function New-MFGetFileTransferScript{
 
 	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $FtpServer
 	$Script = @"
-	option batch on
-	option confirm off
-	open ftp://$($UserName):$($Password)@$($FtpServer):21 -explicittls -certificate "$CertificateFingerprint"
-	ASCII
-	cd /
-	cd $FtpDirectory
-	get $FtpFile "$DestinationFullName"
-	bye
+option batch on
+option confirm off
+open ftp://$($UserName):$($Password)@$($FtpServer):21 -explicittls -certificate "$CertificateFingerprint"
+ASCII
+cd /
+cd $FtpDirectory
+get $FtpFile "$DestinationFullName"
+bye
 "@
 	Try{
 		Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
