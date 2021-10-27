@@ -132,11 +132,16 @@ function Invoke-MFFtpTransferScript {
 
 		[Parameter()]
 		[string]
-		$ScriptFile
+		$ScriptFile,
+
+		[Parameter()]
+		[string]
+		$ComputerName
 	)
 	$RedirectOutputFile = $ScriptFile + '.log'
 	$ScriptFile = (Get-Item $ScriptFile).FullName
-	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script='$ScriptFile' /ini=null /log'$FtpSessionLogDirectory'" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RedirectOutputFile
+	$SessionLog = Join-Path $FtpSessionLogDirectory "$(Get-Date -Format FileDate).$ComputerName.Session.log"
+	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script='$ScriptFile' /ini=null /log='$SessionLog'" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RedirectOutputFile
 
 	return $Process
 }
