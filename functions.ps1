@@ -108,7 +108,7 @@ function New-MFGetFileTransferScript {
 	$Script = @"
 option batch on
 option confirm off
-open ftp://$($UserName):$($Password)@$($ComputerName):21 -explicittls -certificate "$CertificateFingerprint"
+open ftp://$($UserName):$($Password)@$($ComputerName):21 -explicittls -certificate="$CertificateFingerprint"
 ASCII
 cd /
 cd $FtpDirectory
