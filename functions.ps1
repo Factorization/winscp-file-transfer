@@ -1,9 +1,12 @@
 Function New-TempFileName {
 	[CmdletBinding()]
 	param (
+		[Parameter(Mandatory = $false)]
+		[string]
+		$Extension = ".tmp"
 	)
 	$Guid = (New-Guid).Guid
-	$FileName = $Guid + ".tmp"
+	$FileName = $Guid + $Extension
 	return $FileName
 }
 
@@ -65,20 +68,16 @@ function Push-File {
 	return $Transfer
 }
 
-function New-MFGetFileTransferScript{
+function New-MFGetFileTransferScript {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
-		[String]
-		$UserName,
+		[pscredential]
+		$Credential = (Get-Credential),
 
 		[Parameter()]
 		[String]
-		$Password,
-
-		[Parameter()]
-		[String]
-		$FtpServer,
+		$ComputerName,
 
 		[Parameter()]
 		[String]
@@ -96,33 +95,34 @@ function New-MFGetFileTransferScript{
 		[String]
 		$ScriptOutputFullName
 	)
-	if($FtpDirectory[0] -ne "'"){
+	if ($FtpDirectory[0] -ne "'") {
 		$FtpDirectory = "'" + $FtpDirectory
 	}
-	if($FtpDirectory[-1] -ne "'"){
+	if ($FtpDirectory[-1] -ne "'") {
 		$FtpDirectory = $FtpDirectory + "'"
 	}
 
+	$UserName = $Credential.UserName
+	$Password = $Credential.GetNetworkCredential().Password
 	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $FtpServer
 	$Script = @"
 option batch on
 option confirm off
-open ftp://$($UserName):$($Password)@$($FtpServer):21 -explicittls -certificate "$CertificateFingerprint"
+open ftp://$($UserName):$($Password)@$($ComputerName):21 -explicittls -certificate "$CertificateFingerprint"
 ASCII
 cd /
 cd $FtpDirectory
 get $FtpFile "$DestinationFullName"
 bye
 "@
-	Try{
-		Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
-	}
-	Catch{
-		$err = $_
-		$ErrorMsg = "Failed to create script file. Error: $err"
-		Throw $ErrorMsg
-	}
+	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
+
 }
+
+function Invoke-MFFtpTransferScript {
+
+}
+
 function Get-AzureBlobFile {
 	[CmdletBinding()]
 	param (
@@ -1221,6 +1221,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$SmtpServer
 	)
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
+	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
 	$TransferLogEntry = [PSCustomObject]@{
 		Date                = (Get-Date)
 		Direction           = "FromFtpToAzureBlob"
@@ -1238,8 +1239,24 @@ Function Copy-MFFileFromFtpToAzureBlob {
 
 	# Log variables
 	Write-Log -JobName $JobName -Type info -Message "TempFileFullName => $TempFileFullName"
+	Write-Log -JobName $JobName -Type info -Message "TempScriptFullName => $TempScriptFullName"
 
 	# Create FTP File Script
+	Write-Log -JobName $JobName -Type info -Message "Creating script file '$TempScriptFullName' to transfer FTP file '$FtpFile' to temp file '$TempFileFullName'..."
+	Try {
+		New-MFGetFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -DestinationFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName
+		Write-Log -JobName $JobName -Type info -Message "Successfully created script file."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to create script file '$TempScriptFullName' to transfer FTP file '$FtpFile' to temp file '$TempFileFullName'. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		$TransferLogEntry.Status = "Failed"
+		$TransferLogEntry.Error = $ErrMsg
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		return
+	}
 
 	# Copy FTP File to tmp
 	Write-Log -JobName $JobName -Type info -Message "Copying file '$FtpFile' to temp file '$TempFileFullName'..."
@@ -1255,7 +1272,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Continue
+		return
 	}
 
 	# Copy temp file to Azure blob
@@ -1276,7 +1293,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Continue
+		return
 	}
 
 	# Write successful transfer log entry
