@@ -103,7 +103,7 @@ function New-MFGetFileTransferScript{
 		$FtpDirectory = $FtpDirectory + "'"
 	}
 
-	#$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $FtpServer
+	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $FtpServer
 	$Script = @"
 	option batch on
 	option confirm off
