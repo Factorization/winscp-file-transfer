@@ -1283,6 +1283,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		[string]
 		$WinScpComFile = ".\bin\WinSCP.com"
 	)
+	Write-Host "All email = $AllEmail"
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
 	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
 	$TransferLogEntry = [PSCustomObject]@{
@@ -1356,7 +1357,6 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$Err = $_
 		$ErrMsg = "Failed to copy temp file '$TempFileFullName' to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName' file named '$AzureFileName'. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
-		Write-Host "All email = $AllEmail"
 		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
