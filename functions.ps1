@@ -1318,7 +1318,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		If ($DeleteFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
 		return
 	}
 
@@ -1327,7 +1327,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	Try {
 		# Run transfer script
 		Invoke-MFFtpTransferScript -WinSCPComFile $WinScpComFile -FtpSessionLogDirectory $FtpSessionLogDirectory -ScriptFile $TempScriptFullName -ComputerName $FtpServer
-		If ($DeleteFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
 		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
 	}
 	Catch {
@@ -1338,14 +1338,14 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		If ($DeleteFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
 		return
 	}
 
 	# Copy temp file to Azure blob
 	Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName' file named '$AzureFileName'..."
 	Try {
-		$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureFileName -DeleteFile:$DeleteFiles
+		$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureFileName -DeleteFile:$true
 		$PushResultsCount = $PushResults | Measure-Object | Select-Object -ExpandProperty Count
 		if ($PushResultsCount -ne 1) {
 			Throw "Number of files transferred is not equal to 1."
