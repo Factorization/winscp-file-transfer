@@ -1256,7 +1256,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$CustomerEmail,
 
 		[Parameter()]
-		[string[]]
+		[string]
 		$AllEmail,
 
 		[Parameter()]
