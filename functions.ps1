@@ -146,7 +146,7 @@ function Invoke-MFFtpTransferScript {
 	Write-Host $ScriptFile
 	Write-Host $WinSCPComFile
 	Write-Host $SessionLog
-	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script='$ScriptFile' /ini=null /log='$SessionLog'" -Wait -PassThru -RedirectStandardOutput $RedirectOutputFile
+	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script=`"$ScriptFile`" /ini=null /log=`"$SessionLog`"" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RedirectOutputFile
 
 	return $Process
 }
