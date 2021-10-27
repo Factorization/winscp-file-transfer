@@ -138,17 +138,32 @@ function Invoke-MFFtpTransferScript {
 		[string]
 		$ComputerName
 	)
-	$RedirectOutputFile = $ScriptFile + '.log'
 	$ScriptFile = (Get-Item $ScriptFile).FullName
+	$RedirectOutputFile = $ScriptFile + '.log'
 	$WinSCPComFile = (Get-Item $WinSCPComFile).FullName
 	$FtpSessionLogDirectory = (Get-Item $FtpSessionLogDirectory).FullName
 	$SessionLog = Join-Path $FtpSessionLogDirectory "$(Get-Date -Format FileDate).$ComputerName.Session.log"
-	Write-Host $ScriptFile
-	Write-Host $WinSCPComFile
-	Write-Host $SessionLog
 	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script=`"$ScriptFile`" /ini=null /log=`"$SessionLog`"" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RedirectOutputFile
 
-	return $Process
+	If($Process.ExitCode -eq 0){return}
+	else{
+		$LogFile = Get-Content $RedirectOutputFile
+		if($LogFile -match "Access denied."){
+			Throw "Failed to connect to server '$ComputerName'. Invalid username/password."
+		}
+		elseif ($LogFile -match "Could not retrieve file information") {
+			Throw "File does not exist."
+		}
+		elseif ($LogFile -match "Connection failed.") {
+			Throw "Failed to connect to server '$ComputerName'. Server unavailable."
+		}
+		elseif ($LogFile -match "Peer certificate rejected") {
+			Throw "Failed to connect to server '$ComputerName'. Certificate fingerprint does not match."
+		}
+		else {
+			Throw "Unknown error transferring file from server '$ComputerName'."
+		}
+	}
 }
 
 function Get-AzureBlobFile {
