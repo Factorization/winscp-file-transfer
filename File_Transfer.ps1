@@ -279,7 +279,6 @@ PROCESS {
             $ErrMsg = "Invalid direction '$Direction'. Exiting."
             Write-Log -JobName $JobName -Type error -Message $ErrMsg
             Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
-            Close-Session -Session $SourceSession -SuppressErrors
             Exit
         }
     }
