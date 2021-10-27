@@ -93,18 +93,18 @@ function New-MFGetFileTransferScript {
 
 		[Parameter()]
 		[String]
-		$ScriptOutputFullName
+		$ScriptOutputFullName,
+
+		[Parameter()]
+		[switch]
+		$DeleteFile
 	)
-	# if ($FtpDirectory[0] -ne "'") {
-	# 	$FtpDirectory = "'" + $FtpDirectory
-	# }
-	# if ($FtpDirectory[-1] -ne "'") {
-	# 	$FtpDirectory = $FtpDirectory + "'"
-	# }
 
 	$UserName = $Credential.UserName
 	$Password = $Credential.GetNetworkCredential().Password
 	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
+	if($DeleteFile){$delete = "-delete"}
+	else{$delete = ""}
 	$Script = @"
 option batch on
 option confirm off
@@ -112,7 +112,7 @@ open ftp://$($UserName):$($Password)@$($ComputerName):21 -explicittls -certifica
 ASCII
 cd /
 cd $FtpDirectory
-get $FtpFile "$DestinationFullName"
+get $delete $FtpFile "$DestinationFullName"
 bye
 "@
 
