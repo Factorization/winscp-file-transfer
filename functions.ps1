@@ -145,10 +145,10 @@ function Invoke-MFFtpTransferScript {
 	$SessionLog = Join-Path $FtpSessionLogDirectory "$(Get-Date -Format FileDate).$ComputerName.Session.log"
 	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script=`"$ScriptFile`" /ini=null /log=`"$SessionLog`"" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RedirectOutputFile
 
-	If($Process.ExitCode -eq 0){return}
-	else{
+	If ($Process.ExitCode -eq 0) { return }
+	else {
 		$LogFile = Get-Content $RedirectOutputFile
-		if($LogFile -match "Access denied."){
+		if ($LogFile -match "Access denied.") {
 			Throw "Failed to connect to server '$ComputerName'. Invalid username/password."
 		}
 		elseif ($LogFile -match "Could not retrieve file information") {
@@ -163,6 +163,22 @@ function Invoke-MFFtpTransferScript {
 		else {
 			Throw "Unknown error transferring file from server '$ComputerName'."
 		}
+	}
+}
+
+function Remove-MFFtpTransferScript {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[string]
+		$ScriptFile
+	)
+	if (Test-Path -LiteralPath $ScriptFile -PathType Leaf) {
+		Remove-Item -LiteralPath $ScriptFile -Force -Confirm:$False -ErrorAction SilentlyContinue | Out-Null
+	}
+	$RedirectOutputFile = $ScriptFile + '.log'
+	if (Test-Path -LiteralPath $RedirectOutputFile -PathType Leaf) {
+		Remove-Item -LiteralPath $RedirectOutputFile -Force -Confirm:$False -ErrorAction SilentlyContinue | Out-Null
 	}
 }
 
@@ -1302,6 +1318,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
 		return
 	}
 
@@ -1309,6 +1326,8 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	Write-Log -JobName $JobName -Type info -Message "Copying file '$FtpFile' to temp file '$TempFileFullName'..."
 	Try {
 		# Run transfer script
+		Invoke-MFFtpTransferScript -WinSCPComFile $WinScpComFile -FtpSessionLogDirectory $FtpSessionLogDirectory -ScriptFile $TempScriptFullName -ComputerName $FtpServer
+		If ($DeleteFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
 	}
 	Catch {
@@ -1319,6 +1338,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
 		return
 	}
 
