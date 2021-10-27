@@ -262,6 +262,7 @@ PROCESS {
             #     -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
             #     -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
             #     -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+            Write-Host "1. All Email = $AllEmail"
             Copy-MFFileFromFtpToAzureBlob -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder -FtpFile $FtpFile `
                 -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
                 -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName -AzureFileName $AzureFileName`
