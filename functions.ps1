@@ -95,12 +95,12 @@ function New-MFGetFileTransferScript {
 		[String]
 		$ScriptOutputFullName
 	)
-	if ($FtpDirectory[0] -ne "'") {
-		$FtpDirectory = "'" + $FtpDirectory
-	}
-	if ($FtpDirectory[-1] -ne "'") {
-		$FtpDirectory = $FtpDirectory + "'"
-	}
+	# if ($FtpDirectory[0] -ne "'") {
+	# 	$FtpDirectory = "'" + $FtpDirectory
+	# }
+	# if ($FtpDirectory[-1] -ne "'") {
+	# 	$FtpDirectory = $FtpDirectory + "'"
+	# }
 
 	$UserName = $Credential.UserName
 	$Password = $Credential.GetNetworkCredential().Password
