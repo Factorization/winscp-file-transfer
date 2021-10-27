@@ -115,12 +115,29 @@ cd $FtpDirectory
 get $FtpFile "$DestinationFullName"
 bye
 "@
-	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
 
+	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
 }
 
 function Invoke-MFFtpTransferScript {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[string]
+		$WinSCPComFile,
 
+		[Parameter()]
+		[string]
+		$FtpSessionLogDirectory,
+
+		[Parameter()]
+		[string]
+		$ScriptFile
+	)
+	$RedirectOutputFile = $ScriptFile + '.log'
+	$Process = Start-Process -FilePath "$WinSCPComFile" -ArgumentList "/script='$ScriptFile' /ini=null /log'$FtpSessionLogDirectory'" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $RedirectOutputFile
+
+	return $Process
 }
 
 function Get-AzureBlobFile {
@@ -1218,7 +1235,11 @@ Function Copy-MFFileFromFtpToAzureBlob {
 
 		[Parameter()]
 		[string]
-		$SmtpServer
+		$SmtpServer,
+
+		[Parameter()]
+		[string]
+		$WinScpComFile = ".\bin\WinSCP.com"
 	)
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
 	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
