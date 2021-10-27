@@ -129,9 +129,7 @@ BEGIN {
     $FtpSessionLogDirectory = Join-Path $LogDirectory "ftp_session"
     $TransferLogFile = Join-Path $LogDirectory "$($JobName)_Transfer_Log.csv"
     $DeleteFiles = -not $KeepFiles
-    $AllEmail = @()
-    $AllEmail += @($AdminEmail)
-    $AllEmail += @($CustomerEmail)
+    $AllEmail = @($AdminEmail) + @($CustomerEmail)
 
     # Start Logging
     Write-Log -JobName $JobName -Type info -Message "Script start..."
@@ -257,15 +255,9 @@ BEGIN {
 PROCESS {
     Try {
         if ($Direction -eq "FromFtpToAzureBlob") {
-            # Copy-FilesFromFtpToAzureBlob -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder `
-            #     -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
-            #     -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
-            #     -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
-            #     -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
-            Write-Host "1. All Email = $AllEmail"
             Copy-MFFileFromFtpToAzureBlob -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder -FtpFile $FtpFile `
                 -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
-                -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName -AzureFileName $AzureFileName`
+                -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName -AzureFileName $AzureFileName `
                 -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
                 -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath `
                 -WinScpComFile "$CurrentDirectory\bin\WinSCP.com"

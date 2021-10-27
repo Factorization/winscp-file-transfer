@@ -794,71 +794,71 @@ function Send-FailureEmail {
 Function Copy-FilesFromFtpToAzureBlob {
 	[CmdletBinding()]
 	param (
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$JobName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpServer,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpFolder,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[PSCredential]
 		$FtpCredential,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpSessionLogDirectory,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$TempDirectory,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureStorageAccountName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureStorageAccountKey,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureContainerName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$TransferLogFile,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string[]]
 		$CustomerEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string[]]
 		$AllEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FromEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$SmtpAuthCredentialPath,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$SendSuccessEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$DeleteFiles,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$SmtpServer
 	)
@@ -998,71 +998,71 @@ Function Copy-FilesFromFtpToAzureBlob {
 Function Copy-FilesFromAzureBlobToFtp {
 	[CmdletBinding()]
 	param (
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$JobName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpServer,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpFolder,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[PSCredential]
 		$FtpCredential,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpSessionLogDirectory,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$TempDirectory,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureStorageAccountName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureStorageAccountKey,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureContainerName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$TransferLogFile,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string[]]
 		$CustomerEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string[]]
 		$AllEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FromEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$SmtpAuthCredentialPath,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$SendSuccessEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$DeleteFiles,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$SmtpServer
 	)
@@ -1203,87 +1203,86 @@ Function Copy-FilesFromAzureBlobToFtp {
 Function Copy-MFFileFromFtpToAzureBlob {
 	[CmdletBinding()]
 	param (
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$JobName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpServer,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpFolder,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpFile,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[PSCredential]
 		$FtpCredential,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FtpSessionLogDirectory,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$TempDirectory,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureStorageAccountName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureStorageAccountKey,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureContainerName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$AzureFileName,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$TransferLogFile,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string[]]
 		$CustomerEmail,
 
-		[Parameter()]
-		[string]
+		[Parameter(Mandatory = $true)]
+		[string[]]
 		$AllEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$FromEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$SmtpAuthCredentialPath,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$SendSuccessEmail,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[switch]
 		$DeleteFiles,
 
-		[Parameter()]
+		[Parameter(Mandatory = $true)]
 		[string]
 		$SmtpServer,
 
-		[Parameter()]
+		[Parameter(Mandatory = $false)]
 		[string]
 		$WinScpComFile = ".\bin\WinSCP.com"
 	)
-	Write-Host "All email = $AllEmail"
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
 	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
 	$TransferLogEntry = [PSCustomObject]@{
