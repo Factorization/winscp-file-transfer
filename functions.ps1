@@ -168,6 +168,7 @@ bye
 
 	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
 }
+
 function Invoke-MFFtpTransferScript {
 	[CmdletBinding()]
 	param (
@@ -965,7 +966,7 @@ Function Copy-FilesFromFtpToAzureBlob {
 			TempFile            = $TempFileFullName
 			AzureStorageAccount = $AzureStorageAccountName
 			AzureContainer      = $AzureContainerName
-			AzureBloFile        = $AzureBlobFileName
+			AzureBlobFile       = $AzureBlobFileName
 			Status              = ""
 			Error               = ""
 		}
@@ -1168,7 +1169,7 @@ Function Copy-FilesFromAzureBlobToFtp {
 			TempFile            = $TempFileFullName
 			AzureStorageAccount = $AzureStorageAccountName
 			AzureContainer      = $AzureContainerName
-			AzureBloFile        = $AzureBlobFileName
+			AzureBlobFile       = $AzureBlobFileName
 			Status              = ""
 			Error               = ""
 		}
@@ -1181,7 +1182,6 @@ Function Copy-FilesFromAzureBlobToFtp {
 		# Copy Azure blob Files to tmp
 		Write-Log -JobName $JobName -Type info -Message "Copying file '$AzureBlobFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'..."
 		Try {
-			# $TransferOptions = $null
 			$GetResults = Get-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileName $AzureBlobFileName -DestinationFileFullPath $TempFileFullName -DeleteFile:$DeleteFiles
 			$GetResultsCount = $GetResults | Measure-Object | Select-Object -ExpandProperty Count
 			if ($GetResultsCount -ne 1) {
@@ -1331,8 +1331,10 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		[string]
 		$WinScpComFile = ".\bin\WinSCP.com"
 	)
+
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
 	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
+
 	$TransferLogEntry = [PSCustomObject]@{
 		Date                = (Get-Date)
 		Direction           = "FromFtpToAzureBlob"
@@ -1340,10 +1342,10 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		FtpServer           = $FtpServer
 		FtpFolder           = $FtpFolder
 		FtpFile             = $FtpFile
-		TempFile            = $TempFileFullName
+		# TempFile            = $TempFileFullName
 		AzureStorageAccount = $AzureStorageAccountName
 		AzureContainer      = $AzureContainerName
-		AzureBloFile        = $AzureFileName
+		AzureBlobFile       = $AzureFileName
 		Status              = ""
 		Error               = ""
 	}
@@ -1353,23 +1355,23 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	Write-Log -JobName $JobName -Type info -Message "TempScriptFullName => $TempScriptFullName"
 
 	# Check for a successful previous transfer
-	Write-Log -JobName $JobName -Type info -Message "Checking if file '$FtpFile' was already successfully transferred today..."
+	Write-Log -JobName $JobName -Type info -Message "Checking if FTP file '$FtpFile' was already successfully transferred today..."
 	Try {
 		if (Test-Path -LiteralPath $TransferLogFile) {
 			$Results = Import-Csv -LiteralPath $TransferLogFile | Where-Object { (Get-Date $_.Date) -gt (Get-Date).Date } | Where-Object { $_.FtpFile -eq $FtpFile -and $_.Status -eq "Success" }
 			$ResultsCount = $Results | Measure-Object | Select-Object -ExpandProperty Count
 			if ($ResultsCount -ge 1) {
-				Write-Log -JobName $JobName -Type info -Message "File was already transferred successfully."
+				Write-Log -JobName $JobName -Type info -Message "FTP file was already transferred successfully."
 				return
 			}
 			else {
-				Write-Log -JobName $JobName -Type info -Message "File has not been transferred today."
+				Write-Log -JobName $JobName -Type info -Message "FTP file has not been transferred today."
 			}
 		}
 	}
 	Catch {
 		$Err = $_
-		$ErrMsg = "Failed to check if file '$FtpFile' was already transferred. Error: $Err"
+		$ErrMsg = "Failed to check if FTP file '$FtpFile' was already transferred. Error: $Err"
 		Write-Log -JobName $JobName -Type error -Message $ErrMsg
 		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		$TransferLogEntry.Status = "Failed"
@@ -1447,6 +1449,211 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	if ($SendSuccessEmail) {
 		Write-Log -JobName $JobName -Type info -Message "Sending success email..."
 		Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File '$AzureFileName' was successfully transferred to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
+	}
+}
+
+Function Copy-MFFileFromAzureBlobToFtp {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory = $true)]
+		[string]
+		$JobName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$FtpServer,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$FtpFolder,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$FtpFile,
+
+		[Parameter(Mandatory = $true)]
+		[PSCredential]
+		$FtpCredential,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$FtpSessionLogDirectory,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$TempDirectory,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$AzureStorageAccountName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$AzureStorageAccountKey,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$AzureContainerName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$AzureFileName,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$TransferLogFile,
+
+		[Parameter(Mandatory = $true)]
+		[string[]]
+		$CustomerEmail,
+
+		[Parameter(Mandatory = $true)]
+		[string[]]
+		$AllEmail,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$FromEmail,
+
+		[Parameter(Mandatory = $false)]
+		[string]
+		$SmtpAuthCredentialPath,
+
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$SendSuccessEmail,
+
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$DeleteFiles,
+
+		[Parameter(Mandatory = $true)]
+		[string]
+		$SmtpServer,
+
+		[Parameter(Mandatory = $false)]
+		[string]
+		$WinScpComFile = ".\bin\WinSCP.com"
+	)
+
+	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
+	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
+
+	$TransferLogEntry = [PSCustomObject]@{
+		Date                = (Get-Date)
+		Direction           = "FromAzureBlobToFtp"
+		JobName             = $JobName
+		FtpServer           = $FtpServer
+		FtpFolder           = $FtpFolder
+		FtpFile             = $FtpFile
+		# TempFile            = $TempFileFullName
+		AzureStorageAccount = $AzureStorageAccountName
+		AzureContainer      = $AzureContainerName
+		AzureBlobFile       = $AzureFileName
+		Status              = ""
+		Error               = ""
+	}
+
+	# Log variables
+	Write-Log -JobName $JobName -Type info -Message "TempFileFullName => $TempFileFullName"
+	Write-Log -JobName $JobName -Type info -Message "TempScriptFullName => $TempScriptFullName"
+
+	# Check for a successful previous transfer
+	Write-Log -JobName $JobName -Type info -Message "Checking if Azure file '$AzureFileName' was already successfully transferred today..."
+	Try {
+		if (Test-Path -LiteralPath $TransferLogFile) {
+			$Results = Import-Csv -LiteralPath $TransferLogFile | Where-Object { (Get-Date $_.Date) -gt (Get-Date).Date } | Where-Object { $_.AzureBlobFile -eq $AzureFileName -and $_.Status -eq "Success" }
+			$ResultsCount = $Results | Measure-Object | Select-Object -ExpandProperty Count
+			if ($ResultsCount -ge 1) {
+				Write-Log -JobName $JobName -Type info -Message "Azure file was already transferred successfully."
+				return
+			}
+			else {
+				Write-Log -JobName $JobName -Type info -Message "Azure file has not been transferred today."
+			}
+		}
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to check if Azure file '$AzureFileName' was already transferred. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AdminEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		$TransferLogEntry.Status = "Failed"
+		$TransferLogEntry.Error = $ErrMsg
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		return
+	}
+
+	# Copy Azure blob Files to tmp
+	Write-Log -JobName $JobName -Type info -Message "Copying file '$AzureFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'..."
+	Try {
+		$GetResults = Get-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileName $AzureFileName -DestinationFileFullPath $TempFileFullName -DeleteFile:$DeleteFiles
+		$GetResultsCount = $GetResults | Measure-Object | Select-Object -ExpandProperty Count
+		if ($GetResultsCount -ne 1) {
+			Throw "Number of files transferred is not equal to 1."
+		}
+		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to copy file '$AzureFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		$TransferLogEntry.Status = "Failed"
+		$TransferLogEntry.Error = $ErrMsg
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		return
+	}
+
+	# Create FTP File Script
+	Write-Log -JobName $JobName -Type info -Message "Creating script file '$TempScriptFullName' to transfer Temp file '$TempFileFullName' to FTP file '$FtpFile'..."
+	Try {
+		New-MFPutFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -SourceFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName -DeleteFile:$True
+		Write-Log -JobName $JobName -Type info -Message "Successfully created script file."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to create script file '$TempScriptFullName' to transfer temp file '$TempFileFullName' to FTP file '$FtpFile'. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		$TransferLogEntry.Status = "Failed"
+		$TransferLogEntry.Error = $ErrMsg
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		return
+	}
+
+	# Copy temp file to FTP server
+	Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to FTP server '$FtpServer' with file name '$FtpFile'..."
+	Try {
+		# Run transfer script
+		Invoke-MFFtpTransferScript -WinSCPComFile $WinScpComFile -FtpSessionLogDirectory $FtpSessionLogDirectory -ScriptFile $TempScriptFullName -ComputerName $FtpServer
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
+	}
+	Catch {
+		$Err = $_
+		$ErrMsg = "Failed to copy temp file '$TempFileFullName' to FTP server '$FtpServer' with file name '$FtpFile'. Error: $Err"
+		Write-Log -JobName $JobName -Type error -Message $ErrMsg
+		Send-FailureEmail -JobName $JobName -To $AllEmail -Message $ErrMsg -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		$TransferLogEntry.Status = "Failed"
+		$TransferLogEntry.Error = $ErrMsg
+		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		return
+	}
+
+	# Write successful transfer log entry
+	$TransferLogEntry.Status = "Success"
+	$TransferLogEntry.Error = ""
+	Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
+
+	# Email success
+	if ($SendSuccessEmail) {
+		Write-Log -JobName $JobName -Type info -Message "Sending success email..."
+		Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File '$FtpFileFullName' was successfully transferred to FTP server '$FtpServer'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
 	}
 }
