@@ -112,13 +112,62 @@ open ftp://$($UserName):$($Password)@$($ComputerName):21 -explicittls -certifica
 ASCII
 cd /
 cd $FtpDirectory
-get $delete $FtpFile "$DestinationFullName"
+get $delete "$FtpFile" "$DestinationFullName"
 bye
 "@
 
 	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
 }
+function New-MFGetFileTransferScript {
+	[CmdletBinding()]
+	param (
+		[Parameter()]
+		[pscredential]
+		$Credential = (Get-Credential),
 
+		[Parameter()]
+		[String]
+		$ComputerName,
+
+		[Parameter()]
+		[String]
+		$FtpDirectory,
+
+		[Parameter()]
+		[String]
+		$FtpFile,
+
+		[Parameter()]
+		[String]
+		$SourceFullName,
+
+		[Parameter()]
+		[String]
+		$ScriptOutputFullName,
+
+		[Parameter()]
+		[switch]
+		$DeleteFile
+	)
+
+	$UserName = $Credential.UserName
+	$Password = $Credential.GetNetworkCredential().Password
+	$CertificateFingerprint = Get-FtpsFingerprint -ComputerName $ComputerName
+	if ($DeleteFile) { $delete = "-delete" }
+	else { $delete = "" }
+	$Script = @"
+option batch on
+option confirm off
+open ftp://$($UserName):$($Password)@$($ComputerName):21 -explicittls -certificate="$CertificateFingerprint"
+ASCII
+cd /
+cd $FtpDirectory
+put $delete "$SourceFullName" "$FtpFile"
+bye
+"@
+
+	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
+}
 function Invoke-MFFtpTransferScript {
 	[CmdletBinding()]
 	param (
