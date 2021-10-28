@@ -1337,7 +1337,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	)
 
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
-	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
+	$TempScriptFullName = $TempFileFullName + ".script.txt"
 
 	$TransferLogEntry = [PSCustomObject]@{
 		Date                = (Get-Date)
@@ -1408,10 +1408,8 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	Try {
 		# Run transfer script
 		Invoke-MFFtpTransferScript -WinSCPComFile $WinScpComFile -FtpSessionLogDirectory $FtpSessionLogDirectory -ScriptFile $TempScriptFullName -ComputerName $FtpServer
-		If ($DeleteTempFiles) {
-			Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
-			Write-Log -JobName $JobName -Type info -Message "Successfully copied file." 
-  }
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
+		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
 	}
 	Catch {
 		$Err = $_
@@ -1548,7 +1546,7 @@ Function Copy-MFFileFromAzureBlobToFtp {
 	)
 
 	$TempFileFullName = Join-Path $TempDirectory (New-TempFileName)
-	$TempScriptFullName = Join-Path $TempDirectory (New-TempFileName -Extension ".txt")
+	$TempScriptFullName = $TempFileFullName + ".script.txt"
 
 	$TransferLogEntry = [PSCustomObject]@{
 		Date                = (Get-Date)
