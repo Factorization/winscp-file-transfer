@@ -9,7 +9,7 @@ $KeepFiles = $true
 # FTP Settings
 $FtpServer = "ftp1-ip.westus2.cloudapp.azure.com"
 $FtpFolder = "'PATH.TO.FOLDER.'"
-$FtpFile = 'test file.pcap'
+$FtpFile = 'test file.txt'
 $FtpCredentialPath = '.\ftpcred.xml'
 
 # Azure Settings
