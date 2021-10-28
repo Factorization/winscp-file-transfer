@@ -1653,7 +1653,7 @@ Function Copy-MFFileFromAzureBlobToFtp {
 	# Email success
 	if ($SendSuccessEmail) {
 		Write-Log -JobName $JobName -Type info -Message "Sending success email..."
-		Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File '$FtpFileFullName' was successfully transferred to FTP server '$FtpServer'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+		Send-SuccessEmail -JobName $JobName -To $CustomerEmail -Message "File '$FtpFile' was successfully transferred to FTP server '$FtpServer'." -SmtpServer $SmtpServer -From $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 		Write-Log -JobName $JobName -Type info -Message "Successfully sent email."
 	}
 }
