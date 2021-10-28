@@ -27,6 +27,9 @@ $SmtpServer = "10.10.10.15"
 $SendSuccessEmail = $true
 $SmtpAuthCredentialPath = "smtpcred.xml"
 
+########################
+# Run Script
+########################
 Push-Location
 Set-Location $PSScriptRoot
 
