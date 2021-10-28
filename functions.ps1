@@ -118,7 +118,7 @@ bye
 
 	Out-File -LiteralPath $ScriptOutputFullName -Force -InputObject $Script | Out-Null
 }
-function New-MFGetFileTransferScript {
+function New-MFPutFileTransferScript {
 	[CmdletBinding()]
 	param (
 		[Parameter()]
