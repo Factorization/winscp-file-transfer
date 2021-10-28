@@ -263,11 +263,12 @@ PROCESS {
                 -WinScpComFile "$CurrentDirectory\bin\WinSCP.com"
         }
         elseif ($Direction -eq "FromAzureBlobToFtp") {
-            # Copy-FilesFromAzureBlobToFtp -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder `
-            #     -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
-            #     -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName `
-            #     -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
-            #     -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath
+            Copy-MFFileFromAzureBlobToFtp -JobName $JobName -FtpServer $FtpServer -FtpFolder $FtpFolder -FtpFile $FtpFile `
+                -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
+                -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName -AzureFileName $AzureFileName `
+                -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
+                -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath `
+                -WinScpComFile "$CurrentDirectory\bin\WinSCP.com"
         }
         else {
             $ErrMsg = "Invalid direction '$Direction'. Exiting."
