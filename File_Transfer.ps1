@@ -140,6 +140,8 @@ Param(
 
 BEGIN {
     $ErrorActionPreference = 'Stop'
+    $TLS12Protocol = [System.Net.SecurityProtocolType] 'Ssl3 , Tls12'
+    [System.Net.ServicePointManager]::SecurityProtocol = $TLS12Protocol
 
     # Import Functions
     . $PSScriptRoot\Functions.ps1
