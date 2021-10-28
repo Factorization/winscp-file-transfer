@@ -1182,7 +1182,6 @@ Function Copy-FilesFromAzureBlobToFtp {
 		Write-Log -JobName $JobName -Type info -Message "Copying file '$AzureBlobFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'..."
 		Try {
 			# $TransferOptions = $null
-			# $GetResults = Get-File -File $FtpFileFullName -Destination $TempFileFullName -Session $FtpSession -TransferOptions $TransferOptions -DeleteFile:$DeleteFiles
 			$GetResults = Get-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileName $AzureBlobFileName -DestinationFileFullPath $TempFileFullName -DeleteFile:$DeleteFiles
 			$GetResultsCount = $GetResults | Measure-Object | Select-Object -ExpandProperty Count
 			if ($GetResultsCount -ne 1) {
@@ -1359,11 +1358,11 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		if (Test-Path -LiteralPath $TransferLogFile) {
 			$Results = Import-Csv -LiteralPath $TransferLogFile | Where-Object { (Get-Date $_.Date) -gt (Get-Date).Date } | Where-Object { $_.FtpFile -eq $FtpFile -and $_.Status -eq "Success" }
 			$ResultsCount = $Results | Measure-Object | Select-Object -ExpandProperty Count
-			if($ResultsCount -ge 1){
+			if ($ResultsCount -ge 1) {
 				Write-Log -JobName $JobName -Type info -Message "File was already transferred successfully."
 				return
 			}
-			else{
+			else {
 				Write-Log -JobName $JobName -Type info -Message "File has not been transferred today."
 			}
 		}
