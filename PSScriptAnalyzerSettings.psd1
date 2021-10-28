@@ -1,4 +1,10 @@
 # PSScriptAnalyzerSettings.psd1
 @{
-    ExcludeRules = @('PSAvoidUsingPlainTextForPassword')
+    ExcludeRules = @(
+        'PSAvoidUsingPlainTextForPassword',
+        'PSAvoidUsingWriteHost',
+        'PSUseShouldProcessForStateChangingFunctions',
+        'PSUseSingularNouns',
+        'PSAvoidOverwritingBuiltInCmdlets'
+    )
 }
