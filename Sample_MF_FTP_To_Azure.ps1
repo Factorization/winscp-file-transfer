@@ -44,6 +44,7 @@ Set-Location $PSScriptRoot
     -AdminEmail $AdminEmail `
     -FromEmail $FromEmail `
     -SendSuccessEmail:$SendSuccessEmail `
+    -SmtpServer $SmtpServer `
     -KeepSourceFile:$KeepSourceFile `
     -KeepTempFiles:$KeepTempFiles `
     -SmtpAuthCredentialPath $SmtpAuthCredentialPath
