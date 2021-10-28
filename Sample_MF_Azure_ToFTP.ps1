@@ -4,7 +4,8 @@
 # Job Settings
 $JobName = "TestAzureToFTP"
 $Direction = "FromAzureBlobToFTP"
-$KeepFiles = $true
+$KeepSourceFile = $true
+$KeepTempFiles = $false
 
 # FTP Settings
 $FtpServer = "ftp1-ip.westus2.cloudapp.azure.com"
@@ -44,7 +45,8 @@ Set-Location $PSScriptRoot
     -FromEmail $FromEmail `
     -SendSuccessEmail:$SendSuccessEmail `
     -SmtpServer $SmtpServer `
-    -KeepFiles:$KeepFiles `
+    -KeepSourceFile:$KeepSourceFile `
+    -KeepTempFiles:$KeepTempFiles `
     -SmtpAuthCredentialPath $SmtpAuthCredentialPath
 
 Pop-Location

@@ -111,7 +111,12 @@ Param(
     # Keep files on source
     [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
     [switch]
-    $KeepFiles
+    $KeepSourceFile,
+
+    # Keep files on source
+    [Parameter(Mandatory = $False, ValueFromPipeline = $False)]
+    [switch]
+    $KeepTempFiles
 )
 #Requires -RunAsAdministrator
 #Requires -Modules az.storage
@@ -128,7 +133,8 @@ BEGIN {
     $TempDirectory = "$CurrentDirectory\tmp\$JobName"
     $FtpSessionLogDirectory = Join-Path $LogDirectory "ftp_session"
     $TransferLogFile = Join-Path $LogDirectory "$($JobName)_Transfer_Log.csv"
-    $DeleteFiles = -not $KeepFiles
+    $DeleteSourceFile = -not $KeepSourceFile
+    $DeleteTempFiles = -not $KeepTempFiles
     $AllEmail = @($AdminEmail) + @($CustomerEmail)
 
     # Start Logging
@@ -160,8 +166,10 @@ BEGIN {
     Write-Log -JobName $JobName -Type info -Message "SendSuccessEmail => $SendSuccessEmail"
 
     # log file retention variables
-    Write-Log -JobName $JobName -Type info -Message "KeepFiles => $KeepFiles"
-    Write-Log -JobName $JobName -Type info -Message "DeleteFiles => $DeleteFiles"
+    Write-Log -JobName $JobName -Type info -Message "KeepSourceFile => $KeepSourceFile"
+    Write-Log -JobName $JobName -Type info -Message "DeleteSourceFile => $DeleteSourceFile"
+    Write-Log -JobName $JobName -Type info -Message "KeepTempFiles => $KeepTempFiles"
+    Write-Log -JobName $JobName -Type info -Message "DeleteTempFiles => $DeleteTempFiles"
 
     # Log Directory variables
     Write-Log -JobName $JobName -Type info -Message "CurrentDirectory => $CurrentDirectory"
@@ -259,7 +267,7 @@ PROCESS {
                 -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
                 -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName -AzureFileName $AzureFileName `
                 -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
-                -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath `
+                -DeleteSourceFile:$DeleteSourceFile -DeleteTempFiles:$DeleteTempFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath `
                 -WinScpComFile "$CurrentDirectory\bin\WinSCP.com"
         }
         elseif ($Direction -eq "FromAzureBlobToFtp") {
@@ -267,7 +275,7 @@ PROCESS {
                 -FtpCredential $FtpCredential -FtpSessionLogDirectory $FtpSessionLogDirectory -TempDirectory $TempDirectory `
                 -AzureStorageAccountName $AzureStorageAccountName -AzureStorageAccountKey $AzureBlobKey -AzureContainerName $AzureContainerName -AzureFileName $AzureFileName `
                 -TransferLogFile $TransferLogFile -CustomerEmail $CustomerEmail -AllEmail $AllEmail -SendSuccessEmail:$SendSuccessEmail `
-                -DeleteFiles:$DeleteFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath `
+                -DeleteSourceFile:$DeleteSourceFile -DeleteTempFiles:$DeleteTempFiles -SmtpServer $SmtpServer -FromEmail $FromEmail -SmtpAuthCredentialPath $SmtpAuthCredentialPath `
                 -WinScpComFile "$CurrentDirectory\bin\WinSCP.com"
         }
         else {

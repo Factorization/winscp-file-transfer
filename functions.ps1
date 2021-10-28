@@ -1321,7 +1321,11 @@ Function Copy-MFFileFromFtpToAzureBlob {
 
 		[Parameter(Mandatory = $false)]
 		[switch]
-		$DeleteFiles,
+		$DeleteSourceFile,
+
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$DeleteTempFiles,
 
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -1377,14 +1381,14 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
 	# Create FTP File Script
 	Write-Log -JobName $JobName -Type info -Message "Creating script file '$TempScriptFullName' to transfer FTP file '$FtpFile' to temp file '$TempFileFullName'..."
 	Try {
-		New-MFGetFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -DestinationFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName -DeleteFile:$DeleteFiles
+		New-MFGetFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -DestinationFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName -DeleteFile:$DeleteSourceFile
 		Write-Log -JobName $JobName -Type info -Message "Successfully created script file."
 	}
 	Catch {
@@ -1395,7 +1399,7 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
@@ -1404,8 +1408,10 @@ Function Copy-MFFileFromFtpToAzureBlob {
 	Try {
 		# Run transfer script
 		Invoke-MFFtpTransferScript -WinSCPComFile $WinScpComFile -FtpSessionLogDirectory $FtpSessionLogDirectory -ScriptFile $TempScriptFullName -ComputerName $FtpServer
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
-		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
+		If ($DeleteTempFiles) {
+			Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+			Write-Log -JobName $JobName -Type info -Message "Successfully copied file." 
+  }
 	}
 	Catch {
 		$Err = $_
@@ -1415,14 +1421,14 @@ Function Copy-MFFileFromFtpToAzureBlob {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
 	# Copy temp file to Azure blob
 	Write-Log -JobName $JobName -Type info -Message "Copying temp file '$TempFileFullName' to Azure storage account named '$AzureStorageAccountName' in container '$AzureContainerName' file named '$AzureFileName'..."
 	Try {
-		$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureFileName -DeleteFile:$true
+		$PushResults = Push-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileFullPath $TempFileFullName -DestinationFileName $AzureFileName -DeleteFile:$DeleteTempFiles
 		$PushResultsCount = $PushResults | Measure-Object | Select-Object -ExpandProperty Count
 		if ($PushResultsCount -ne 1) {
 			Throw "Number of files transferred is not equal to 1."
@@ -1526,7 +1532,11 @@ Function Copy-MFFileFromAzureBlobToFtp {
 
 		[Parameter(Mandatory = $false)]
 		[switch]
-		$DeleteFiles,
+		$DeleteSourceFile,
+
+		[Parameter(Mandatory = $false)]
+		[switch]
+		$DeleteTempFiles,
 
 		[Parameter(Mandatory = $true)]
 		[string]
@@ -1582,14 +1592,14 @@ Function Copy-MFFileFromAzureBlobToFtp {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
 	# Copy Azure blob Files to tmp
 	Write-Log -JobName $JobName -Type info -Message "Copying file '$AzureFileName' from Azure storage account '$AzureStorageAccountName' in container '$AzureContainerName' to temp file '$TempFileFullName'..."
 	Try {
-		$GetResults = Get-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileName $AzureFileName -DestinationFileFullPath $TempFileFullName -DeleteFile:$DeleteFiles
+		$GetResults = Get-AzureBlobFile -StorageAccountName $AzureStorageAccountName -StorageAccountKey $AzureStorageAccountKey -Container $AzureContainerName -SourceFileName $AzureFileName -DestinationFileFullPath $TempFileFullName -DeleteFile:$DeleteSourceFile
 		$GetResultsCount = $GetResults | Measure-Object | Select-Object -ExpandProperty Count
 		if ($GetResultsCount -ne 1) {
 			Throw "Number of files transferred is not equal to 1."
@@ -1610,7 +1620,7 @@ Function Copy-MFFileFromAzureBlobToFtp {
 	# Create FTP File Script
 	Write-Log -JobName $JobName -Type info -Message "Creating script file '$TempScriptFullName' to transfer Temp file '$TempFileFullName' to FTP file '$FtpFile'..."
 	Try {
-		New-MFPutFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -SourceFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName -DeleteFile:$True
+		New-MFPutFileTransferScript -Credential $FtpCredential -ComputerName $FtpServer -FtpDirectory $FtpFolder -FtpFile $FtpFile -SourceFullName $TempFileFullName -ScriptOutputFullName $TempScriptFullName -DeleteFile:$DeleteTempFiles
 		Write-Log -JobName $JobName -Type info -Message "Successfully created script file."
 	}
 	Catch {
@@ -1621,7 +1631,7 @@ Function Copy-MFFileFromAzureBlobToFtp {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
@@ -1630,7 +1640,7 @@ Function Copy-MFFileFromAzureBlobToFtp {
 	Try {
 		# Run transfer script
 		Invoke-MFFtpTransferScript -WinSCPComFile $WinScpComFile -FtpSessionLogDirectory $FtpSessionLogDirectory -ScriptFile $TempScriptFullName -ComputerName $FtpServer
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		Write-Log -JobName $JobName -Type info -Message "Successfully copied file."
 	}
 	Catch {
@@ -1641,7 +1651,7 @@ Function Copy-MFFileFromAzureBlobToFtp {
 		$TransferLogEntry.Status = "Failed"
 		$TransferLogEntry.Error = $ErrMsg
 		Write-TransferLog -TransferLogEntry $TransferLogEntry -File $TransferLogFile
-		Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName
+		If ($DeleteTempFiles) { Remove-MFFtpTransferScript -ScriptFile $TempScriptFullName }
 		return
 	}
 
